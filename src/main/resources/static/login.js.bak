@@ -1,0 +1,35 @@
+/* modified login.js: store auth token (if returned) and redirect to dashboard */
+async function doLogin(e){
+  e && e.preventDefault();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  try{
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ email, password }),
+      credentials: "same-origin"
+    });
+    const j = await res.json().catch(()=>null);
+    if(!res.ok) {
+      alert(j?.message || "Login failed");
+      return;
+    }
+    // store token if server returned one
+    if(j && j.data) {
+      try { localStorage.setItem("authToken", j.data); } catch(e) { console.warn("localStorage set failed", e); }
+    }
+    // redirect to dashboard
+    window.location = "/dashboard.html";
+  }catch(err){
+    console.error(err);
+    alert("Login error");
+  }
+}
+// attach if form exists
+document.addEventListener("DOMContentLoaded", ()=>{
+  const f = document.querySelector("form#loginForm");
+  if(f) f.addEventListener("submit", doLogin);
+});
+
+

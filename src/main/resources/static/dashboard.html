@@ -1,0 +1,158 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SmartSpend — Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Inter, Arial, sans-serif; background: linear-gradient(180deg,#061226,#071426); color:#e6eef6; margin:0; padding:28px; }
+    .wrap{max-width:900px;margin:0 auto}
+    h1{margin:0 0 12px 0}
+    .card{background:rgba(255,255,255,0.03);padding:18px;border-radius:10px;box-shadow:0 8px 30px rgba(1,6,20,0.6)}
+    .form-row{display:flex;gap:10px;margin-top:12px}
+    input, select {padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;flex:1}
+    button{padding:10px 14px;border-radius:8px;border:0;background:#00d1ff;color:#001;cursor:pointer;font-weight:600}
+    table{width:100%;margin-top:18px;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
+    .small{font-size:13px;color:#9fb3c8}
+    .right{display:flex;gap:8px;align-items:center}
+    .muted{color:#7f93a5}
+    .btn-danger{background:#ff6b6b;color:#fff;border-radius:6px;padding:6px 8px;cursor:pointer;border:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>SmartSpend — Dashboard</h1>
+    <p class="small">Expenses saved to the server for your account.</p>
+
+    <div class="card">
+      <h3>Add Expense</h3>
+      <div class="form-row">
+        <input id="title" placeholder="Title (e.g. Coffee)">
+        <input id="amount" type="number" placeholder="Amount">
+        <select id="category">
+          <option>Food</option>
+          <option>Travel</option>
+          <option>Shopping</option>
+          <option>Bills</option>
+          <option>Other</option>
+        </select>
+        <button id="addBtn">Add</button>
+      </div>
+
+      <table id="tbl" aria-live="polite">
+        <thead>
+          <tr><th>Title</th><th>Amount</th><th>Category</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="margin-top:12px" class="right">
+        <div class="muted">Total:</div>
+        <div id="total" style="margin-left:8px;font-weight:700">0</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function getAuthHeaders(){
+  const t = localStorage.getItem('authToken');
+  const h = {};
+  if(t) h['X-AUTH-TOKEN'] = t;
+  return h;
+}
+
+async function apiGet(url){
+  const headers = getAuthHeaders();
+  const res = await fetch(url, { credentials:'same-origin', headers });
+  if(!res.ok){
+    const txt = await res.text().catch(()=>'');
+    throw new Error(res.status + ':' + (txt||'Request failed'));
+  }
+  return res.json();
+}
+async function apiPost(url, body){
+  const headers = Object.assign({'Content-Type':'application/json'}, getAuthHeaders());
+  const res = await fetch(url, { method:'POST', credentials:'same-origin', headers, body: JSON.stringify(body) });
+  if(!res.ok){
+    const txt = await res.text().catch(()=>'');
+    throw new Error(res.status + ':' + (txt||'Request failed'));
+  }
+  return res.json();
+}
+async function apiDelete(url){
+  const headers = getAuthHeaders();
+  const res = await fetch(url, { method:'DELETE', credentials:'same-origin', headers });
+  if(!res.ok){
+    const txt = await res.text().catch(()=>'');
+    throw new Error(res.status + ':' + (txt||'Request failed'));
+  }
+  return res.json().catch(()=>({}));
+}
+
+function escapeHtml(s){ return String(s || '').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+async function load(){
+  try{
+    const list = await apiGet('/api/expenses');
+    const tbody = document.querySelector('#tbl tbody');
+    tbody.innerHTML = '';
+    let total = 0;
+    list.forEach((e)=>{
+      total += Number(e.amount||0);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(e.title)}</td>
+                      <td>₹ ${Number(e.amount).toFixed(2)}</td>
+                      <td>${escapeHtml(e.category)}</td>
+                      <td class="muted">${new Date(e.date).toLocaleString()}</td>
+                      <td><button class="btn-danger" data-id="${e.id}">Delete</button></td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('total').textContent = '₹ ' + total.toFixed(2);
+  }catch(err){
+    console.error('load error', err);
+    // if unauthorized, redirect to login
+    if(String(err).includes('401') || String(err).toLowerCase().includes('unauthorized')) {
+      // remove any bad token
+      try{ localStorage.removeItem('authToken'); }catch(e){}
+      window.location = '/login.html';
+      return;
+    }
+    // other errors — show an alert
+    alert('Error loading expenses. Open console for details.');
+  }
+}
+
+document.getElementById('addBtn').addEventListener('click', async ()=>{
+  const title = document.getElementById('title').value.trim();
+  const amount = Number(document.getElementById('amount').value || 0);
+  const category = document.getElementById('category').value;
+  if(!title || amount <= 0){ alert('Please enter title and amount'); return; }
+  try{
+    await apiPost('/api/expenses', { title, amount, category });
+    document.getElementById('title').value='';
+    document.getElementById('amount').value='';
+    load();
+  }catch(e){
+    alert(e.message || 'Error');
+  }
+});
+
+document.querySelector('#tbl tbody').addEventListener('click', async (ev)=>{
+  if(ev.target && ev.target.matches('button[data-id]')){
+    const id = ev.target.getAttribute('data-id');
+    if(!confirm('Delete this expense?')) return;
+    try{
+      await apiDelete('/api/expenses/' + id);
+      load();
+    }catch(e){
+      alert(e.message || 'Delete failed');
+    }
+  }
+});
+
+// initial
+load();
+</script>
+</body>
+</html>

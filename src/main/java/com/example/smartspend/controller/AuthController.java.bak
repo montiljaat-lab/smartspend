@@ -1,0 +1,27 @@
+package com.example.smartspend.controller;
+
+import com.example.smartspend.service.AuthService;
+import com.example.smartspend.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/auth")   // ✅ IMPORTANT: Base path set
+@CrossOrigin(origins = "*")    // ✅ Allow API to be accessed from frontend
+public class AuthController {
+
+    @Autowired
+    private AuthService authService;
+
+    // ✅ REGISTER API
+    @PostMapping("/register")
+    public String registerUser(@RequestBody User user) {
+        return authService.register(user);
+    }
+
+    // ✅ LOGIN API
+    @PostMapping("/login")
+    public String loginUser(@RequestBody User user) {
+        return authService.login(user);
+    }
+}

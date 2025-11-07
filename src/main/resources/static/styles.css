@@ -1,0 +1,18 @@
+:root{--bg:#071426;--glass:rgba(255,255,255,0.06);--accent:#00d1ff;--card:#0e1a27}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#061226 0%,#071426 60%);color:#e6eef6}
+.stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px;position:relative;overflow:hidden}
+.glass{width:420px;max-width:92%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:28px 30px;backdrop-filter: blur(8px);box-shadow:0 10px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.04)}
+.title{font-size:32px;margin:0 0 6px 0;letter-spacing:0.6px}
+.subtitle{margin:0 0 18px 0;color:#92a6bd;font-size:13px}
+.form .row{margin-bottom:12px}
+.form input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#eaf4ff;outline:none;font-size:14px}
+.form input::placeholder{color:#7f93a5}
+.actions{display:flex;justify-content:flex-end}
+button{padding:10px 16px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#7afcff);color:#012;cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(0,209,255,0.08)}
+button:active{transform:translateY(1px)}
+.msg{margin-top:8px;font-size:13px;color:#9fdfff;min-height:18px}
+.hint{margin-top:12px;color:#92a6bd;font-size:13px;text-align:center}
+.hint a{color:#bfefff;text-decoration:none}
+.cinematic{position:absolute;right:-10%;top:-20%;width:60vmax;height:120vmax;transform:rotate(30deg);background:radial-gradient(circle at 10% 10%, rgba(0,209,255,0.06), transparent 10%), radial-gradient(circle at 80% 80%, rgba(122,64,255,0.04), transparent 10%);filter:blur(36px);pointer-events:none}
+@media (max-width:520px){.glass{padding:20px}}
