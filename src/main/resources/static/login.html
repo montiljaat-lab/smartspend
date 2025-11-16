@@ -30,12 +30,14 @@
   </div>
 
   <script>
+    // BACKEND BASE URL (Railway)
     const API_BASE = "https://smartspend-production-d76a.up.railway.app";
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("loginPassword").value.trim();
       const msg = document.getElementById("loginMessage");
+
       msg.textContent = "";
       msg.className = "auth-message";
 
@@ -46,8 +48,7 @@
       }
 
       try {
-      const res = await fetch(API_BASE + "/api/auth/login", {
-
+        const res = await fetch(API_BASE + "/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({ email, password })
@@ -55,20 +56,18 @@
 
         if (!res.ok) {
           const text = await res.text();
-          msg.textContent = "Login failed: " + text;
+          msg.textContent = "Login failed: " + (text || res.statusText);
           msg.classList.add("error");
           return;
         }
 
-        const token = await res.text(); // backend returns token as plain text (UUID)
-        // save token for later (if needed)
+        const token = (await res.text()).trim();
         localStorage.setItem("token", token);
         localStorage.setItem("userEmail", email);
 
         msg.textContent = "Login successful. Redirecting…";
         msg.classList.add("success");
 
-        // go to dashboard
         setTimeout(() => {
           window.location.href = "dashboard2.html";
         }, 800);

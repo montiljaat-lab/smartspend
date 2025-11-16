@@ -10,7 +10,7 @@
     <h1 class="auth-title">Create Account</h1>
 
     <div class="auth-field">
-      <label>Name</label>
+      <label>Full Name</label>
       <input type="text" id="regName" placeholder="Your name" />
     </div>
 
@@ -35,6 +35,7 @@
   </div>
 
   <script>
+    // BACKEND BASE URL (Railway)
     const API_BASE = "https://smartspend-production-d76a.up.railway.app";
 
     document.getElementById("registerBtn").addEventListener("click", async () => {
@@ -42,6 +43,7 @@
       const email = document.getElementById("regEmail").value.trim();
       const password = document.getElementById("regPassword").value.trim();
       const msg = document.getElementById("registerMessage");
+
       msg.textContent = "";
       msg.className = "auth-message";
 
@@ -51,8 +53,8 @@
         return;
       }
 
-      try {const res = await fetch(API_BASE + "/api/auth/register", {
-
+      try {
+        const res = await fetch(API_BASE + "/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password })
@@ -60,7 +62,7 @@
 
         if (!res.ok) {
           const text = await res.text();
-          msg.textContent = "Registration failed: " + text;
+          msg.textContent = "Registration failed: " + (text || res.statusText);
           msg.classList.add("error");
           return;
         }
