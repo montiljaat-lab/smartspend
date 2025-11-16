@@ -5,6 +5,7 @@
   <title>SmartSpend — Register</title>
   <link rel="stylesheet" href="content.css" />
 </head>
+
 <body class="auth-body">
   <div class="auth-container">
     <h1 class="auth-title">Create Account</h1>
@@ -35,15 +36,15 @@
   </div>
 
   <script>
-    // BACKEND BASE URL (Railway)
+    // ⭐ BACKEND API (Railway)
     const API_BASE = "https://smartspend-production-d76a.up.railway.app";
 
     document.getElementById("registerBtn").addEventListener("click", async () => {
       const name = document.getElementById("regName").value.trim();
       const email = document.getElementById("regEmail").value.trim();
       const password = document.getElementById("regPassword").value.trim();
-      const msg = document.getElementById("registerMessage");
 
+      const msg = document.getElementById("registerMessage");
       msg.textContent = "";
       msg.className = "auth-message";
 
@@ -62,20 +63,20 @@
 
         if (!res.ok) {
           const text = await res.text();
-          msg.textContent = "Registration failed: " + (text || res.statusText);
+          msg.textContent = "Registration failed: " + text;
           msg.classList.add("error");
           return;
         }
 
-        msg.textContent = "Registration successful. You can log in now.";
+        msg.textContent = "Registration successful! Redirecting...";
         msg.classList.add("success");
 
         setTimeout(() => {
           window.location.href = "login.html";
-        }, 1000);
+        }, 1200);
+
       } catch (err) {
-        console.error(err);
-        msg.textContent = "Something went wrong while registering.";
+        msg.textContent = "Something went wrong.";
         msg.classList.add("error");
       }
     });

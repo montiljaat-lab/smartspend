@@ -5,6 +5,7 @@
   <title>SmartSpend — Login</title>
   <link rel="stylesheet" href="content.css" />
 </head>
+
 <body class="auth-body">
   <div class="auth-container">
     <h1 class="auth-title">Welcome Back</h1>
@@ -24,25 +25,25 @@
     <div id="loginMessage" class="auth-message"></div>
 
     <p class="auth-footer">
-      Need an account?
+      Need an account?  
       <a href="register.html">Register</a>
     </p>
   </div>
 
   <script>
-    // BACKEND BASE URL (Railway)
+    // ⭐ BACKEND API (Railway)
     const API_BASE = "https://smartspend-production-d76a.up.railway.app";
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("loginPassword").value.trim();
-      const msg = document.getElementById("loginMessage");
 
+      const msg = document.getElementById("loginMessage");
       msg.textContent = "";
       msg.className = "auth-message";
 
       if (!email || !password) {
-        msg.textContent = "Please enter email and password.";
+        msg.textContent = "Please enter email & password.";
         msg.classList.add("error");
         return;
       }
@@ -56,24 +57,25 @@
 
         if (!res.ok) {
           const text = await res.text();
-          msg.textContent = "Login failed: " + (text || res.statusText);
+          msg.textContent = "Login failed: " + text;
           msg.classList.add("error");
           return;
         }
 
-        const token = (await res.text()).trim();
+        const token = await res.text();
+
         localStorage.setItem("token", token);
         localStorage.setItem("userEmail", email);
 
-        msg.textContent = "Login successful. Redirecting…";
+        msg.textContent = "Login successful. Redirecting...";
         msg.classList.add("success");
 
         setTimeout(() => {
           window.location.href = "dashboard2.html";
         }, 800);
+
       } catch (err) {
-        console.error(err);
-        msg.textContent = "Something went wrong while logging in.";
+        msg.textContent = "Something went wrong.";
         msg.classList.add("error");
       }
     });
