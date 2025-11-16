@@ -1,118 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartSpend — Login</title>
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #0d1117;
-            font-family: Arial, sans-serif;
-            color: #e5e7eb;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            background: #161b22;
-            padding: 40px;
-            border-radius: 12px;
-            width: 350px;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            outline: none;
-            border-radius: 6px;
-            background: #0d1117;
-            color: white;
-            font-size: 14px;
-            border: 1px solid #30363d;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #00eaff;
-            color: black;
-            font-size: 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background: #0ff;
-        }
-
-        #loginMsg {
-            margin-top: 10px;
-            font-size: 13px;
-            text-align: center;
-        }
-
-        #loginMsg.error {
-            color: #ff6b6b;
-        }
-
-        #loginMsg.success {
-            color: #4ade80;
-        }
-
-        .register-link {
-            text-align: center;
-            margin-top: 12px;
-            font-size: 13px;
-        }
-
-        .register-link a {
-            color: #00eaff;
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>SmartSpend — Login</title>
+  <link rel="stylesheet" href="content.css" />
 </head>
-<body>
+<body class="auth-body">
+  <div class="auth-container">
+    <h1 class="auth-title">Welcome Back</h1>
 
-    <div class="container">
-        <h2>Welcome Back</h2>
-
-        <form id="loginForm">
-            <div class="input-group">
-                <input type="email" id="email" placeholder="Enter email" required>
-            </div>
-
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Enter password" required>
-            </div>
-
-            <button type="submit">Sign In</button>
-
-            <div id="loginMsg"></div>
-        </form>
-
-        <div class="register-link">
-            Need an account? <a href="register.html">Register</a>
-        </div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" />
     </div>
 
-    <script src="login.js"></script>
+    <div class="auth-field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+    </div>
+
+    <button id="loginBtn" class="auth-button">Sign In</button>
+
+    <div id="loginMessage" class="auth-message"></div>
+
+    <p class="auth-footer">
+      Need an account?
+      <a href="register.html">Register</a>
+    </p>
+  </div>
+
+  <script>
+    const API_BASE = "https://smartspend-production-d76a.up.railway.app";
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      const msg = document.getElementById("loginMessage");
+      msg.textContent = "";
+      msg.className = "auth-message";
+
+      if (!email || !password) {
+        msg.textContent = "Please enter email and password.";
+        msg.classList.add("error");
+        return;
+      }
+
+      try {
+        const res = await fetch(API_BASE + "/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ email, password })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          msg.textContent = "Login failed: " + text;
+          msg.classList.add("error");
+          return;
+        }
+
+        const token = await res.text(); // backend returns token as plain text (UUID)
+        // save token for later (if needed)
+        localStorage.setItem("token", token);
+        localStorage.setItem("userEmail", email);
+
+        msg.textContent = "Login successful. Redirecting…";
+        msg.classList.add("success");
+
+        // go to dashboard
+        setTimeout(() => {
+          window.location.href = "dashboard2.html";
+        }, 800);
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "Something went wrong while logging in.";
+        msg.classList.add("error");
+      }
+    });
+  </script>
 </body>
 </html>

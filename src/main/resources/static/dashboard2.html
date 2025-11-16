@@ -875,530 +875,153 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    // ===== SESSION ID (display only) =====
-    let token = localStorage.getItem("token");
-    if (!token) {
-        token = "demo-session-" + Date.now().toString().slice(-4);
-        localStorage.setItem("token", token);
-    }
-    const tokenPreview = document.getElementById("tokenPreview");
-    if (tokenPreview) tokenPreview.textContent = token;
+  const API_BASE = "https://smartspend-production-d76a.up.railway.app";
+  const MONTHLY_LIMIT = 5000;
 
-    // Current logged-in user (for per-user data)
-    const currentUserEmail = localStorage.getItem("loggedInEmail") || "guest";
-    const BUDGET_STORAGE_KEY = "akm_budget_entries_" + currentUserEmail;
-    const PROFILE_KEY = "akm_profile_" + currentUserEmail;
-
-    // set default date today for expense + budget
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const expDateInput = document.getElementById("expDate");
-    if (expDateInput && !expDateInput.value) expDateInput.value = todayStr;
-    const budgetDateInput = document.getElementById("budgetDate");
-    if (budgetDateInput && !budgetDateInput.value) budgetDateInput.value = todayStr;
-
-    // ===== TABS =====
-    const tabs = document.querySelectorAll(".nav-tab");
-    const subtitle = document.querySelector(".subtitle");
-    const overviewSection = document.getElementById("overviewSection");
-    const budgetSection = document.getElementById("budgetSection");
-    const insightsSection = document.getElementById("insightsSection");
-
-    const tabDescriptions = {
-        overview: "Track your daily expenses, see patterns and stay in control of your budget.",
-        budget: "Maintain your cash, bank, cards, debts and savings snapshot.",
-        insights: "Use last year’s spending and budget insights to plan smarter."
-    };
-
-    const sections = { overview: overviewSection, budget: budgetSection, insights: insightsSection };
-
-    function setActiveTab(key) {
-        tabs.forEach(t => t.classList.remove("active"));
-        tabs.forEach(t => { if (t.dataset.tab === key) t.classList.add("active"); });
-        Object.keys(sections).forEach(k => {
-            if (sections[k]) sections[k].style.display = (k === key ? "block" : "none");
-        });
-        if (subtitle && tabDescriptions[key]) subtitle.textContent = tabDescriptions[key];
-    }
-
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => setActiveTab(tab.dataset.tab));
-    });
-    setActiveTab("overview");
-
-    // ===== DOM ELEMENTS =====
+  document.addEventListener("DOMContentLoaded", () => {
     const tbody = document.getElementById("expenseBody");
     const totalSpan = document.getElementById("totalSpent");
     const todaySpan = document.getElementById("todaySpent");
     const remainingSpan = document.getElementById("remainingBudget");
-    const MONTHLY_LIMIT = 5000;
     const msg = document.getElementById("dashMsg");
+    const tokenPreview = document.getElementById("tokenPreview");
 
-    const insights30 = document.getElementById("insights30");
-    const insights90 = document.getElementById("insights90");
-    const insights365 = document.getElementById("insights365");
-    const insightsTopCategory = document.getElementById("insightsTopCategory");
-    const insightsTopAmount = document.getElementById("insightsTopAmount");
-    const insightsBars = document.getElementById("insightsBars");
-    const budgetInsightsBars = document.getElementById("budgetInsightsBars");
-    const circleSpendBudget = document.getElementById("circleSpendBudget");
-    const circleSpendBudgetLabel = document.getElementById("circleSpendBudgetLabel");
-    const circleTopCategory = document.getElementById("circleTopCategory");
-    const circleTopCategoryLabel = document.getElementById("circleTopCategoryLabel");
-    const circleTopCategoryName = document.getElementById("circleTopCategoryName");
-
-    const budgetBody = document.getElementById("budgetBody");
-    const budgetMsg = document.getElementById("budgetMsg");
-    const budgetTotalCash = document.getElementById("budgetTotalCash");
-    const budgetTotalBank = document.getElementById("budgetTotalBank");
-    const budgetTotalCard = document.getElementById("budgetTotalCard");
-    const budgetTotalDebt = document.getElementById("budgetTotalDebt");
-    const budgetTotalSavings = document.getElementById("budgetTotalSavings");
-    const budgetNetWorth = document.getElementById("budgetNetWorth");
+    // just show stored token (demo)
+    const token = localStorage.getItem("token") || "no-token";
+    if (tokenPreview) tokenPreview.textContent = token;
 
     function renderEmptyRow() {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="5" class="muted">No expenses yet. Add your first one above.</td>`;
-        tbody.appendChild(tr);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="4" class="muted">No expenses yet. Add your first one above.</td>`;
+      tbody.appendChild(tr);
     }
 
-    function resetSummary() {
+    async function loadExpenses() {
+      try {
+        msg.textContent = "";
+        msg.className = "";
+
+        const res = await fetch(API_BASE + "/api/expenses/list");
+        if (!res.ok) throw new Error("Failed to load expenses");
+
+        const data = await res.json(); // [{id,title,category,amount,createdAt}, ...]
+
+        tbody.innerHTML = "";
+        if (!Array.isArray(data) || data.length === 0) {
+          renderEmptyRow();
+          totalSpan.textContent = "₹0";
+          todaySpan.textContent = "₹0";
+          remainingSpan.textContent = "₹" + MONTHLY_LIMIT;
+          return;
+        }
+
+        let total = 0;
+        let todayTotal = 0;
+        const todayDate = new Date().toISOString().slice(0, 10);
+
+        data.forEach(e => {
+          const amount = Number(e.amount) || 0;
+          total += amount;
+
+          let whenText = "—";
+          if (e.createdAt) {
+            const created = new Date(e.createdAt);
+            if (!isNaN(created.getTime())) {
+              whenText = created.toLocaleString().replace(",", "");
+              const createdDateOnly = created.toISOString().slice(0, 10);
+              if (createdDateOnly === todayDate) {
+                todayTotal += amount;
+              }
+            }
+          }
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${e.title || ""}</td>
+            <td><span class="tag">${e.category || "Other"}</span></td>
+            <td>₹${amount}</td>
+            <td>${whenText}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        totalSpan.textContent = "₹" + total;
+        todaySpan.textContent = "₹" + todayTotal;
+        remainingSpan.textContent = "₹" + (MONTHLY_LIMIT - total);
+      } catch (error) {
+        console.error(error);
+        msg.textContent = "Could not load expenses from server (showing empty table).";
+        msg.className = "error";
+        tbody.innerHTML = "";
+        renderEmptyRow();
         totalSpan.textContent = "₹0";
         todaySpan.textContent = "₹0";
         remainingSpan.textContent = "₹" + MONTHLY_LIMIT;
-        insights30.textContent = "₹0";
-        insights90.textContent = "₹0";
-        insights365.textContent = "₹0";
-        insightsTopCategory.textContent = "—";
-        insightsTopAmount.textContent = "₹0";
-        insightsBars.innerHTML = `<div class="muted" style="margin-top:8px;">Not enough data yet for insights.</div>`;
-        if (budgetInsightsBars) {
-            budgetInsightsBars.innerHTML = `<div class="muted" style="margin-top:8px;">No budget data yet.</div>`;
-        }
-        circleSpendBudget.style.setProperty("--percent", 0);
-        circleSpendBudgetLabel.textContent = "0%";
-        circleTopCategory.style.setProperty("--percent", 0);
-        circleTopCategoryLabel.textContent = "0%";
-        circleTopCategoryName.textContent = "Top category share";
+      }
     }
 
-    // ===== BUDGET HELPERS (per-user, localStorage) =====
-    function getBudgetEntries() {
-        try {
-            const raw = localStorage.getItem(BUDGET_STORAGE_KEY);
-            if (!raw) return [];
-            return JSON.parse(raw);
-        } catch (e) {
-            return [];
-        }
-    }
-
-    function saveBudgetEntries(entries) {
-        localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(entries));
-    }
-
-    function recomputeBudgetSummary() {
-        const entries = getBudgetEntries();
-        budgetBody.innerHTML = "";
-        if (!entries.length) {
-            budgetBody.innerHTML = `<tr><td colspan="4" class="muted">No budget snapshots added yet.</td></tr>`;
-        } else {
-            entries.forEach(e => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${e.type}</td>
-                    <td>₹${e.amount}</td>
-                    <td>${e.date || "—"}</td>
-                    <td>${e.note || ""}</td>
-                `;
-                budgetBody.appendChild(tr);
-            });
-        }
-
-        let totalCash = 0, totalBank = 0, totalCard = 0, totalDebt = 0, totalSavings = 0;
-        entries.forEach(e => {
-            const amt = Number(e.amount) || 0;
-            switch (e.type) {
-                case "Cash": totalCash += amt; break;
-                case "Bank": totalBank += amt; break;
-                case "Card": totalCard += amt; break;
-                case "DebtOwed": totalDebt += amt; break;
-                case "DebtToReceive": totalDebt -= amt; break;
-                case "Savings": totalSavings += amt; break;
-            }
-        });
-
-        budgetTotalCash.textContent = "₹" + totalCash;
-        budgetTotalBank.textContent = "₹" + totalBank;
-        budgetTotalCard.textContent = "₹" + totalCard;
-        budgetTotalDebt.textContent = "₹" + totalDebt;
-        budgetTotalSavings.textContent = "₹" + totalSavings;
-
-        const netWorth = totalCash + totalBank + totalSavings - totalDebt;
-        budgetNetWorth.textContent = "₹" + netWorth;
-    }
-
-    // ===== LOAD EXPENSES FROM BACKEND =====
-    async function loadExpenses() {
-        try {
-            msg.textContent = "";
-            msg.className = "";
-
-            const resp = await fetch("/public/expenses/list");
-            if (!resp.ok) throw new Error("Failed to load expenses");
-            const data = await resp.json();
-
-            tbody.innerHTML = "";
-            insightsBars.innerHTML = "";
-            if (budgetInsightsBars) budgetInsightsBars.innerHTML = "";
-
-            if (!Array.isArray(data) || data.length === 0) {
-                renderEmptyRow();
-                resetSummary();
-                return;
-            }
-
-            let total = 0;
-            let todayTotal = 0;
-            const todayDate = new Date().toISOString().slice(0, 10);
-            const now = new Date();
-            const categoryStats = {};
-            let last30 = 0, last90 = 0, last365 = 0;
-
-            const metaRaw = localStorage.getItem("akm_expense_meta");
-            const meta = metaRaw ? JSON.parse(metaRaw) : {};
-
-            data.forEach(e => {
-                const amount = Number(e.amount) || 0;
-                total += amount;
-
-                const metaKey = e.id || "";
-                const metaEntry = meta[metaKey] || {};
-                const method = metaEntry.method || "—";
-                const customDateStr = metaEntry.date || null;
-
-                let whenText = "—";
-                let effectiveDate = null;
-
-                if (customDateStr) {
-                    effectiveDate = new Date(customDateStr + "T00:00:00");
-                } else if (e.createdAt) {
-                    effectiveDate = new Date(e.createdAt);
-                }
-
-                if (effectiveDate && !isNaN(effectiveDate.getTime())) {
-                    whenText = effectiveDate.toLocaleDateString();
-                    const createdDateOnly = effectiveDate.toISOString().slice(0, 10);
-                    const diffDays = (now - effectiveDate) / (1000 * 60 * 60 * 24);
-
-                    if (createdDateOnly === todayDate) todayTotal += amount;
-                    if (diffDays <= 30) last30 += amount;
-                    if (diffDays <= 90) last90 += amount;
-                    if (diffDays <= 365) last365 += amount;
-                }
-
-                const cat = (e.category && e.category.trim()) || "Other";
-                if (!categoryStats[cat]) {
-                    categoryStats[cat] = { total: 0, count: 0 };
-                }
-                categoryStats[cat].total += amount;
-                categoryStats[cat].count += 1;
-
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${e.title || ""}</td>
-                    <td><span class="tag">${cat}</span></td>
-                    <td>${method}</td>
-                    <td>₹${amount}</td>
-                    <td>${whenText}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            totalSpan.textContent = "₹" + total;
-            todaySpan.textContent = "₹" + todayTotal;
-            remainingSpan.textContent = "₹" + (MONTHLY_LIMIT - total);
-
-            renderInsights(categoryStats, last30, last90, last365);
-        } catch (error) {
-            console.error(error);
-            msg.textContent = "Could not load expenses from server (showing empty table).";
-            msg.className = "error";
-            tbody.innerHTML = "";
-            renderEmptyRow();
-            resetSummary();
-        }
-    }
-
-    function renderInsights(categoryStats, last30, last90, last365) {
-        insightsBars.innerHTML = "";
-        if (budgetInsightsBars) budgetInsightsBars.innerHTML = "";
-
-        insights30.textContent = "₹" + last30;
-        insights90.textContent = "₹" + last90;
-        insights365.textContent = "₹" + last365;
-
-        const entries = Object.entries(categoryStats);
-
-        if (!entries.length) {
-            insightsBars.innerHTML = `<div class="muted" style="margin-top:8px;">Not enough data yet for spending insights.</div>`;
-            circleSpendBudget.style.setProperty("--percent", 0);
-            circleSpendBudgetLabel.textContent = "0%";
-            circleTopCategory.style.setProperty("--percent", 0);
-            circleTopCategoryLabel.textContent = "0%";
-            circleTopCategoryName.textContent = "Top category share";
-        } else {
-            entries.sort((a, b) => b[1].total - a[1].total);
-            const [topCat, topStat] = entries[0];
-            insightsTopCategory.textContent = topCat;
-            insightsTopAmount.textContent = "₹" + topStat.total;
-
-            const allTotal = entries.reduce((sum, [, s]) => sum + s.total, 0);
-            const totalSpendYear = last365;
-
-            let topPercent = 0;
-            if (allTotal > 0) topPercent = Math.round((topStat.total / allTotal) * 100);
-            circleTopCategory.style.setProperty("--percent", topPercent);
-            circleTopCategoryLabel.textContent = topPercent + "%";
-            circleTopCategoryName.textContent = topCat + " share";
-
-            const maxTotal = topStat.total || 1;
-            entries.forEach(([cat, stat]) => {
-                const widthPercent = Math.round((stat.total / maxTotal) * 100);
-                const sharePercent = allTotal > 0 ? Math.round((stat.total / allTotal) * 100) : 0;
-                const row = document.createElement("div");
-                row.className = "bar-row";
-                row.innerHTML = `
-                    <div>${cat}</div>
-                    <div class="bar-track"><div class="bar-fill" style="width:${widthPercent}%;"></div></div>
-                    <div>₹${stat.total} (${sharePercent}%)</div>
-                `;
-                insightsBars.appendChild(row);
-            });
-
-            const budgetEntries = getBudgetEntries();
-            const now = new Date();
-            let totalCash = 0, totalBank = 0, totalCard = 0, totalSavings = 0, totalDebt = 0;
-            let totalBudgetYear = 0;
-
-            budgetEntries.forEach(b => {
-                const amt = Number(b.amount) || 0;
-                const type = b.type;
-                if (type === "Cash") totalCash += amt;
-                else if (type === "Bank") totalBank += amt;
-                else if (type === "Card") totalCard += amt;
-                else if (type === "DebtOwed") totalDebt += amt;
-                else if (type === "DebtToReceive") totalDebt -= amt;
-                else if (type === "Savings") totalSavings += amt;
-
-                if (b.date) {
-                    const d = new Date(b.date + "T00:00:00");
-                    if (!isNaN(d.getTime())) {
-                        const diffDays = (now - d) / (1000 * 60 * 60 * 24);
-                        if (diffDays <= 365 && ["Cash", "Bank", "Card", "Savings"].includes(type)) {
-                            totalBudgetYear += Math.max(0, amt);
-                        }
-                    }
-                }
-            });
-
-            let spendPercent = 0;
-            if (totalBudgetYear > 0 && totalSpendYear > 0) {
-                spendPercent = Math.round((totalSpendYear / totalBudgetYear) * 100);
-                if (spendPercent > 100) spendPercent = 100;
-            }
-            circleSpendBudget.style.setProperty("--percent", spendPercent);
-            circleSpendBudgetLabel.textContent = spendPercent + "%";
-
-            const budgetDist = [
-                ["Cash", totalCash],
-                ["Bank", totalBank],
-                ["Card", totalCard],
-                ["Savings", totalSavings],
-                ["Debt (net)", totalDebt]
-            ].filter(([, amt]) => amt !== 0);
-
-            if (!budgetDist.length) {
-                if (budgetInsightsBars) {
-                    budgetInsightsBars.innerHTML = `<div class="muted" style="margin-top:8px;">No budget data yet.</div>`;
-                }
-            } else if (budgetInsightsBars) {
-                const maxBudget = Math.max(...budgetDist.map(([, amt]) => Math.abs(amt)));
-                const totalPos = budgetDist
-                    .filter(([label]) => label !== "Debt (net)")
-                    .reduce((s, [, amt]) => s + Math.max(0, amt), 0);
-
-                budgetDist.forEach(([label, amt]) => {
-                    const widthPercent = Math.round((Math.abs(amt) / maxBudget) * 100);
-                    const shareBase = totalPos || 1;
-                    const sharePercent = label === "Debt (net)"
-                        ? (totalPos > 0 ? Math.round((Math.abs(amt) / shareBase) * 100) : 0)
-                        : (shareBase > 0 ? Math.round((Math.max(0, amt) / shareBase) * 100) : 0);
-
-                    const row = document.createElement("div");
-                    row.className = "bar-row";
-                    row.innerHTML = `
-                        <div>${label}</div>
-                        <div class="bar-track"><div class="bar-fill" style="width:${widthPercent}%;"></div></div>
-                        <div>₹${amt} (${sharePercent}%)</div>
-                    `;
-                    budgetInsightsBars.appendChild(row);
-                });
-            }
-        }
-    }
-
-    // Initial load
-    recomputeBudgetSummary();
+    // Load on page open
     loadExpenses();
 
-    // ===== ADD EXPENSE =====
+    // Add Expense
     document.getElementById("addExpenseBtn").addEventListener("click", async () => {
-        const title = document.getElementById("expTitle").value.trim();
-        const amountVal = document.getElementById("expAmount").value;
-        const amount = Number(amountVal);
-        const category = document.getElementById("expCategory").value;
-        const method = document.getElementById("expMethod").value;
-        const date = document.getElementById("expDate").value;
+      const title = document.getElementById("expTitle").value.trim();
+      const amountVal = document.getElementById("expAmount").value;
+      const amount = Number(amountVal);
+      const category = document.getElementById("expCategory").value;
+      const date = document.getElementById("expDate").value; // if you added a date field
 
-        msg.className = "";
-        msg.textContent = "";
+      msg.className = "";
+      msg.textContent = "";
 
-        if (!title || !amountVal) {
-            msg.textContent = "Please enter both title and amount.";
-            msg.classList.add("error");
-            return;
+      if (!title || !amountVal) {
+        msg.textContent = "Please enter both title and amount.";
+        msg.classList.add("error");
+        return;
+      }
+
+      try {
+        const res = await fetch(API_BASE + "/api/expenses/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            category,
+            amount,
+            date: date || null
+          })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          msg.textContent = "Failed to add expense: " + text;
+          msg.classList.add("error");
+          return;
         }
 
-        try {
-            const resp = await fetch("/public/expenses/add", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: title,
-                    category: category,
-                    amount: amount
-                })
-            });
+        await loadExpenses();
 
-            if (!resp.ok) {
-                const text = await resp.text();
-                msg.textContent = "Failed to add expense: " + text;
-                msg.classList.add("error");
-                return;
-            }
+        msg.textContent = "Expense saved to backend successfully.";
+        msg.classList.add("success");
 
-            const saved = await resp.json();
-            const metaRaw = localStorage.getItem("akm_expense_meta");
-            const meta = metaRaw ? JSON.parse(metaRaw) : {};
-            if (saved && saved.id) {
-                meta[saved.id] = {
-                    method,
-                    date: date || null
-                };
-                localStorage.setItem("akm_expense_meta", JSON.stringify(meta));
-            }
-
-            await loadExpenses();
-            msg.textContent = "Expense saved to backend successfully.";
-            msg.classList.add("success");
-
-            document.getElementById("expTitle").value = "";
-            document.getElementById("expAmount").value = "";
-        } catch (error) {
-            console.error(error);
-            msg.textContent = "Something went wrong while saving expense.";
-            msg.classList.add("error");
-        }
+        document.getElementById("expTitle").value = "";
+        document.getElementById("expAmount").value = "";
+      } catch (error) {
+        console.error(error);
+        msg.textContent = "Something went wrong while saving expense.";
+        msg.classList.add("error");
+      }
     });
 
-    // ===== ADD BUDGET SNAPSHOT =====
-    document.getElementById("addBudgetBtn").addEventListener("click", () => {
-        const type = document.getElementById("budgetType").value;
-        const amountVal = document.getElementById("budgetAmount").value;
-        const date = document.getElementById("budgetDate").value;
-        const note = document.getElementById("budgetNote").value.trim();
-
-        budgetMsg.className = "";
-        budgetMsg.textContent = "";
-
-        if (!amountVal) {
-            budgetMsg.textContent = "Please enter amount.";
-            budgetMsg.classList.add("error");
-            return;
-        }
-
-        const amount = Number(amountVal);
-        const entries = getBudgetEntries();
-        entries.push({ type, amount, date, note });
-        saveBudgetEntries(entries);
-
-        recomputeBudgetSummary();
-        loadExpenses(); // update insights
-
-        budgetMsg.textContent = "Budget snapshot saved.";
-        budgetMsg.classList.add("success");
-
-        document.getElementById("budgetAmount").value = "";
-        document.getElementById("budgetNote").value = "";
-    });
-
-    // ===== PROFILE SYSTEM =====
-    const profileModal = document.getElementById("profileModal");
-    const profileBtn = document.getElementById("profileBtn");
-    const closeProfile = document.getElementById("closeProfile");
-    const saveProfileBtn = document.getElementById("saveProfileBtn");
-    const avatarPreview = document.getElementById("avatarPreview");
-    const avatarInput = document.getElementById("avatarInput");
-
-    function loadProfile() {
-        let raw = localStorage.getItem(PROFILE_KEY);
-        let data = raw ? JSON.parse(raw) : {};
-
-        document.getElementById("profName").value = data.name || "";
-        document.getElementById("profEmail").value = currentUserEmail;
-        document.getElementById("profPhone").value = data.phone || "";
-        document.getElementById("profCountry").value = data.country || "";
-        avatarPreview.src = data.avatar || "https://i.imgur.com/0y8Ftya.png";
-    }
-
-    profileBtn.addEventListener("click", () => {
-        loadProfile();
-        profileModal.classList.remove("hidden");
-    });
-
-    closeProfile.addEventListener("click", () => {
-        profileModal.classList.add("hidden");
-    });
-
-    saveProfileBtn.addEventListener("click", () => {
-        const data = {
-            name: document.getElementById("profName").value.trim(),
-            email: currentUserEmail,
-            phone: document.getElementById("profPhone").value.trim(),
-            country: document.getElementById("profCountry").value.trim(),
-            avatar: avatarPreview.src
-        };
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
-        alert("Profile saved successfully!");
-    });
-
-    avatarInput.addEventListener("change", function () {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => avatarPreview.src = reader.result;
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // LOGOUT
+    // Logout
     document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem("token");
-        window.location.href = "login.html";
+      localStorage.removeItem("token");
+      localStorage.removeItem("userEmail");
+      window.location.href = "login.html";
     });
-});
+  });
 </script>
+
 
 </body>
 </html>
