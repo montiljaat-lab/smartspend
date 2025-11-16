@@ -1,35 +1,163 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SmartSpend — Register</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <title>SmartSpend - Register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 24px 28px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+            width: 320px;
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .field {
+            margin-bottom: 12px;
+        }
+        label {
+            font-size: 14px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        input {
+            width: 100%;
+            padding: 8px 10px;
+            box-sizing: border-box;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 10px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .message.success {
+            color: green;
+        }
+        .message.error {
+            color: red;
+        }
+        .link {
+            margin-top: 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .link a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="stage">
-    <div class="glass">
-      <h1 class="title">SmartSpend</h1>
-      <p class="subtitle">Create account — manage spending like a pro</p>
-      <form id="f" class="form" autocomplete="off">
-        <div class="row">
-          <input id="name" name="name" placeholder="Full name" required />
+
+<div class="card">
+    <h2>Create Account</h2>
+
+    <form id="registerForm">
+        <div class="field">
+            <label for="fullName">Full Name</label>
+            <input id="fullName" name="fullName" required>
         </div>
-        <div class="row">
-          <input id="email" name="email" type="email" placeholder="Email address" required />
+
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email" required>
         </div>
-        <div class="row">
-          <input id="password" name="password" type="password" placeholder="Password" required />
+
+        <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" required>
         </div>
-        <div class="row actions">
-          <button id="submit" type="submit">Create account</button>
-        </div>
-        <div id="msg" class="msg" aria-live="polite"></div>
-      </form>
-      <div class="hint">Already have an account? <a href="/login.html">Login</a></div>
+
+        <button type="submit" class="btn-primary" id="submitBtn">Sign Up</button>
+    </form>
+
+    <div id="msg" class="message"></div>
+
+    <div class="link">
+        Already have an account? <a href="login.html">Login</a>
     </div>
-    <div class="cinematic"></div>
-  </div>
-  <script src="register.js"></script>
+</div>
+
+<script>
+    const form = document.getElementById("registerForm");
+    const msg = document.getElementById("msg");
+    const submitBtn = document.getElementById("submitBtn");
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault(); // button click pe page reload mat hone do
+
+        msg.textContent = "";
+        msg.className = "message";
+        submitBtn.disabled = true;
+
+        const payload = {
+            fullName: document.getElementById("fullName").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value
+        };
+
+        try {
+            const response = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                msg.textContent = "Registration failed: " + text;
+                msg.className = "message error";
+            } else {
+                const text = await response.text(); // yahi pe tumhe wo UUID / token mila tha
+                msg.textContent = "Registered successfully! ID: " + text;
+                msg.className = "message success";
+                // Optional: 2 seconds baad login page pe bhejna ho to:
+                // setTimeout(() => window.location.href = "login.html", 2000);
+            }
+        } catch (err) {
+            console.error(err);
+            msg.textContent = "Something went wrong. Check backend console.";
+            msg.className = "message error";
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+
 </body>
 </html>

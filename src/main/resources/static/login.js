@@ -1,71 +1,74 @@
-﻿/* login.js - robust login + token storage */
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("form#loginForm") || document.querySelector("form");
-  async function doLogin(e) {
-    if(e) e.preventDefault();
-    const emailEl = document.getElementById("email") || document.querySelector('input[type="email"]');
-    const pwEl = document.getElementById("password") || document.querySelector('input[type="password"]');
-    const email = emailEl?.value?.trim() || "";
-    const password = pwEl?.value || "";
+    const form = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const msg = document.getElementById("loginMsg");
 
-    if (!email || !password) {
-      alert("Please enter email and password");
-      return;
+    function clearMessage() {
+        msg.textContent = "";
+        msg.classList.remove("error", "success");
     }
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "same-origin"
-      });
-      let body = null;
-      try { body = await res.json(); } catch (err) { /* maybe response is plain text */ }
 
-      if (!res.ok) {
-        const msg = (body && (body.message||body.error||JSON.stringify(body))) || "Login failed";
-        alert("Failed: " + msg);
-        return;
-      }
-
-      // Accept either {"token":"..."} OR raw string token OR any truthy string
-      let token = null;
-      if (body) {
-        if (typeof body === "string") token = body;
-        else token = body.token || body.authToken || body.id || null;
-      }
-
-      // if no json token, maybe server returned plain text - try text
-      if (!token) {
-        const text = await res.text().catch(()=>null);
-        if (text && text.length > 0) token = text;
-      }
-
-      if (!token) {
-        alert("Login succeeded but token not found in server response. Check server response in devtools Network tab.");
-        return;
-      }
-
-      try {
-        localStorage.setItem("authToken", token);
-      } catch (err) {
-        console.warn("localStorage failed, using sessionStorage", err);
-        sessionStorage.setItem("authToken", token);
-      }
-
-      // final redirect
-      window.location = "/dashboard.html";
-    } catch (err) {
-      console.error("Login error", err);
-      alert("Login error. See console for details.");
+    function showMessage(text, type) {
+        msg.textContent = text;
+        msg.classList.remove("error", "success");
+        if (type) msg.classList.add(type); // "error" / "success"
     }
-  }
 
-  if (form) {
-    form.addEventListener("submit", doLogin);
-  } else {
-    // attach to any login button as fallback
-    const btn = document.querySelector("button[type='submit'], #loginBtn");
-    if (btn) btn.addEventListener("click", doLogin);
-  }
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearMessage();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+            showMessage("Please enter both email and password.", "error");
+            return;
+        }
+
+        try {
+            // form-urlencoded body (Spring ke saath friendly)
+            const body = new URLSearchParams();
+            body.append("email", email);
+            body.append("password", password);
+
+            const resp = await fetch("/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: body.toString()
+            });
+
+            if (!resp.ok) {
+                const txt = (await resp.text()).trim();
+                if (resp.status === 401) {
+                    showMessage("Invalid email or password. Please register first.", "error");
+                } else {
+                    showMessage(txt || "Login failed. Try again.", "error");
+                }
+                return;
+            }
+
+            const token = (await resp.text()).trim();
+            if (!token) {
+                showMessage("Login succeeded but token missing. Contact developer.", "error");
+                return;
+            }
+
+            localStorage.setItem("token", token);
+            localStorage.setItem("loggedInEmail", email);
+
+            showMessage("Login successful! Redirecting…", "success");
+
+            setTimeout(() => {
+                window.location.href = "dashboard2.html";
+            }, 600);
+
+        } catch (err) {
+            console.error(err);
+            showMessage("Something went wrong while logging in. Check server.", "error");
+        }
+    });
 });

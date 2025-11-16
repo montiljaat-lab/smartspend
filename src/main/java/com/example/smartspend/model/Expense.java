@@ -1,51 +1,70 @@
 package com.example.smartspend.model;
 
-import jakarta.persistence.*;
-import java.time.Instant;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "expenses")
 public class Expense {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    private Long userId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     private String title;
 
-    private double amount;
-
     private String category;
 
-    private Instant date;
+    private double amount;
 
-    public Expense() {}
+    private LocalDateTime createdAt;
 
-    public Expense(Long userId, String title, double amount, String category, Instant date) {
-        this.userId = userId;
-        this.title = title;
-        this.amount = amount;
-        this.category = category;
-        this.date = date;
+    public Expense() {
     }
 
-    // getters & setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // ====== Getters & Setters ======
 
-    public Long getUserId(){ return userId; }
-    public void setUserId(Long userId){ this.userId = userId; }
+    public String getId() {
+        return id;
+    }
 
-    public String getTitle(){ return title; }
-    public void setTitle(String title){ this.title = title; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public double getAmount(){ return amount; }
-    public void setAmount(double amount){ this.amount = amount; }
+    public String getTitle() {
+        return title;
+    }
 
-    public String getCategory(){ return category; }
-    public void setCategory(String category){ this.category = category; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public Instant getDate(){ return date; }
-    public void setDate(Instant date){ this.date = date; }
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
