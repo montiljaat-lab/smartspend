@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>SmartSpend — Login</title>
-  <link rel="stylesheet" href="content.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body class="auth-body">
+
   <div class="auth-container">
     <h1 class="auth-title">Welcome Back</h1>
 
     <form id="loginForm">
-
       <div class="auth-field">
         <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" />
+        <input type="email" id="loginEmail" placeholder="you@example.com" required>
       </div>
 
       <div class="auth-field">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Your password" />
+        <input type="password" id="loginPassword" placeholder="Your password" required>
       </div>
 
       <button id="loginBtn" class="auth-button" type="submit">Sign In</button>
@@ -29,7 +30,6 @@
         Need an account?
         <a href="register.html">Register</a>
       </p>
-
     </form>
   </div>
 
@@ -38,14 +38,13 @@
 
   const form = document.getElementById("loginForm");
   const msg = document.getElementById("loginMessage");
-  const submitBtn = document.getElementById("loginBtn");
+  const btn = document.getElementById("loginBtn");
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     msg.textContent = "";
-    msg.className = "auth-message";
-    submitBtn.disabled = true;
+    btn.disabled = true;
 
     const payload = {
       email: document.getElementById("loginEmail").value,
@@ -55,35 +54,35 @@
     try {
       const response = await fetch(API_BASE_URL + "/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
-      const txt = await response.text();
+      const token = await response.text();
 
       if (!response.ok) {
-        msg.textContent = "Login failed: " + txt;
-        msg.classList.remove("success");
-        msg.classList.add("error");
-      } else {
-        msg.textContent = "Login successful!";
-        msg.classList.remove("error");
-        msg.classList.add("success");
-
-        // baad me yahin se dashboard pe bhejenge
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 1500);
+        msg.textContent = "Login failed: " + token;
+        msg.className = "auth-message error";
+        btn.disabled = false;
+        return;
       }
+
+      // SAVE TOKEN — **MOST IMPORTANT FIX**
+      localStorage.setItem("token", token);
+      localStorage.setItem("userEmail", payload.email);
+
+      msg.textContent = "Login successful! Redirecting...";
+      msg.className = "auth-message success";
+
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 1000);
+
     } catch (err) {
-      console.error(err);
-      msg.textContent = "Network error. Please try again.";
-      msg.classList.remove("success");
-      msg.classList.add("error");
+      msg.textContent = "Network error!";
+      msg.className = "auth-message error";
     } finally {
-      submitBtn.disabled = false;
+      btn.disabled = false;
     }
   });
 </script>

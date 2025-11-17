@@ -880,147 +880,161 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const tbody = document.getElementById("expenseBody");
-    const totalSpan = document.getElementById("totalSpent");
-    const todaySpan = document.getElementById("todaySpent");
-    const remainingSpan = document.getElementById("remainingBudget");
-    const msg = document.getElementById("dashMsg");
+    const dashMsg = document.getElementById("dashMsg");
     const tokenPreview = document.getElementById("tokenPreview");
 
-    // just show stored token (demo)
-    const token = localStorage.getItem("token") || "no-token";
-    if (tokenPreview) tokenPreview.textContent = token;
+    // Load token
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "login.html";
+      return;
+    }
+    tokenPreview.textContent = token;
 
+    // Render empty row helper
     function renderEmptyRow() {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td colspan="4" class="muted">No expenses yet. Add your first one above.</td>`;
-      tbody.appendChild(tr);
+      tbody.innerHTML = `<tr><td colspan="5" class="muted">No expenses yet. Add your first one above.</td></tr>`;
     }
 
+    // ===========================
+    //   LOAD EXPENSES
+    // ===========================
     async function loadExpenses() {
       try {
-        msg.textContent = "";
-        msg.className = "";
+        dashMsg.textContent = "";
+        dashMsg.className = "";
 
-        const res = await fetch(API_BASE + "/api/expenses/list");
-        if (!res.ok) throw new Error("Failed to load expenses");
+        const res = await fetch(API_BASE + "/api/expenses/list", {
+          headers: {
+            "Authorization": token
+          }
+        });
 
-        const data = await res.json(); // [{id,title,category,amount,createdAt}, ...]
+        if (!res.ok) throw new Error("Failed to load");
 
+        const data = await res.json();
         tbody.innerHTML = "";
+
         if (!Array.isArray(data) || data.length === 0) {
           renderEmptyRow();
-          totalSpan.textContent = "₹0";
-          todaySpan.textContent = "₹0";
-          remainingSpan.textContent = "₹" + MONTHLY_LIMIT;
+          document.getElementById("totalSpent").textContent = "₹0";
+          document.getElementById("todaySpent").textContent = "₹0";
+          document.getElementById("remainingBudget").textContent = "₹" + MONTHLY_LIMIT;
           return;
         }
 
         let total = 0;
         let todayTotal = 0;
-        const todayDate = new Date().toISOString().slice(0, 10);
+        const today = new Date().toISOString().slice(0, 10);
 
         data.forEach(e => {
-          const amount = Number(e.amount) || 0;
-          total += amount;
+          const amt = Number(e.amount) || 0;
+          total += amt;
 
-          let whenText = "—";
+          let when = "—";
           if (e.createdAt) {
-            const created = new Date(e.createdAt);
-            if (!isNaN(created.getTime())) {
-              whenText = created.toLocaleString().replace(",", "");
-              const createdDateOnly = created.toISOString().slice(0, 10);
-              if (createdDateOnly === todayDate) {
-                todayTotal += amount;
+            const d = new Date(e.createdAt);
+            if (!isNaN(d)) {
+              when = d.toLocaleString();
+              if (d.toISOString().slice(0, 10) === today) {
+                todayTotal += amt;
               }
             }
           }
 
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${e.title || ""}</td>
-            <td><span class="tag">${e.category || "Other"}</span></td>
-            <td>₹${amount}</td>
-            <td>${whenText}</td>
+            <td>${e.title}</td>
+            <td><span class="tag">${e.category}</span></td>
+            <td>${e.method || "N/A"}</td>
+            <td>₹${amt}</td>
+            <td>${when}</td>
           `;
           tbody.appendChild(tr);
         });
 
-        totalSpan.textContent = "₹" + total;
-        todaySpan.textContent = "₹" + todayTotal;
-        remainingSpan.textContent = "₹" + (MONTHLY_LIMIT - total);
-      } catch (error) {
-        console.error(error);
-        msg.textContent = "Could not load expenses from server (showing empty table).";
-        msg.className = "error";
-        tbody.innerHTML = "";
+        document.getElementById("totalSpent").textContent = "₹" + total;
+        document.getElementById("todaySpent").textContent = "₹" + todayTotal;
+        document.getElementById("remainingBudget").textContent = "₹" + (MONTHLY_LIMIT - total);
+
+      } catch (err) {
+        console.error(err);
+        dashMsg.textContent = "Could not load expenses from server.";
+        dashMsg.className = "error";
         renderEmptyRow();
-        totalSpan.textContent = "₹0";
-        todaySpan.textContent = "₹0";
-        remainingSpan.textContent = "₹" + MONTHLY_LIMIT;
       }
     }
 
-    // Load on page open
     loadExpenses();
 
-    // Add Expense
+    // ===========================
+    //   ADD EXPENSE
+    // ===========================
     document.getElementById("addExpenseBtn").addEventListener("click", async () => {
       const title = document.getElementById("expTitle").value.trim();
-      const amountVal = document.getElementById("expAmount").value;
-      const amount = Number(amountVal);
+      const amount = Number(document.getElementById("expAmount").value);
       const category = document.getElementById("expCategory").value;
-      const date = document.getElementById("expDate").value; // if you added a date field
+      const method = document.getElementById("expMethod")?.value || "N/A";
+      const date = document.getElementById("expDate").value;
 
-      msg.className = "";
-      msg.textContent = "";
+      dashMsg.textContent = "";
+      dashMsg.className = "";
 
-      if (!title || !amountVal) {
-        msg.textContent = "Please enter both title and amount.";
-        msg.classList.add("error");
+      if (!title || !amount) {
+        dashMsg.textContent = "Please enter title & amount.";
+        dashMsg.classList.add("error");
         return;
       }
 
       try {
         const res = await fetch(API_BASE + "/api/expenses/add", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+          },
           body: JSON.stringify({
             title,
-            category,
             amount,
+            category,
+            method,
             date: date || null
           })
         });
 
         if (!res.ok) {
-          const text = await res.text();
-          msg.textContent = "Failed to add expense: " + text;
-          msg.classList.add("error");
+          const errorTxt = await res.text();
+          dashMsg.textContent = "Failed to add: " + errorTxt;
+          dashMsg.classList.add("error");
           return;
         }
 
-        await loadExpenses();
-
-        msg.textContent = "Expense saved to backend successfully.";
-        msg.classList.add("success");
+        dashMsg.textContent = "Expense added successfully!";
+        dashMsg.classList.add("success");
 
         document.getElementById("expTitle").value = "";
         document.getElementById("expAmount").value = "";
-      } catch (error) {
-        console.error(error);
-        msg.textContent = "Something went wrong while saving expense.";
-        msg.classList.add("error");
+
+        loadExpenses();
+
+      } catch (err) {
+        dashMsg.textContent = "Network error.";
+        dashMsg.classList.add("error");
       }
     });
 
-    // Logout
+    // ===========================
+    //   LOGOUT
+    // ===========================
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("token");
       localStorage.removeItem("userEmail");
       window.location.href = "login.html";
     });
+
   });
 </script>
+
 
 
 </body>
