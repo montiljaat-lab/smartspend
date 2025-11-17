@@ -5,6 +5,7 @@
   <title>SmartSpend — Register</title>
   <link rel="stylesheet" href="content.css" />
 </head>
+
 <body class="auth-body">
   <div class="auth-container">
     <h1 class="auth-title">Create Account</h1>
@@ -33,25 +34,24 @@
       <a href="login.html">Login</a>
     </p>
   </div>
-
 <script>
   const API_BASE_URL = "https://smartspend-production-d76a.up.railway.app";
 
   const form = document.getElementById("registerForm");
-  const msg = document.getElementById("msg");
-  const submitBtn = document.getElementById("submitBtn");
+  const msg = document.getElementById("registerMessage");
+  const submitBtn = document.getElementById("registerBtn");
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     msg.textContent = "";
-    msg.className = "message";
+    msg.className = "auth-message";
     submitBtn.disabled = true;
 
     const payload = {
-      fullName: document.getElementById("fullName").value,
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
+      fullName: document.getElementById("regName").value,
+      email: document.getElementById("regEmail").value,
+      password: document.getElementById("regPassword").value
     };
 
     try {
@@ -67,10 +67,12 @@
 
       if (!response.ok) {
         msg.textContent = "Registration failed: " + txt;
-        msg.className = "message error";
+        msg.classList.remove("success");
+        msg.classList.add("error");
       } else {
         msg.textContent = "Registered successfully! " + txt;
-        msg.className = "message success";
+        msg.classList.remove("error");
+        msg.classList.add("success");
 
         setTimeout(() => {
           window.location.href = "login.html";
@@ -79,7 +81,8 @@
     } catch (err) {
       console.error(err);
       msg.textContent = "Network error. Please try again.";
-      msg.className = "message error";
+      msg.classList.remove("success");
+      msg.classList.add("error");
     } finally {
       submitBtn.disabled = false;
     }
