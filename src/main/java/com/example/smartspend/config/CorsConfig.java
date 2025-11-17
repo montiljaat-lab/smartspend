@@ -1,11 +1,4 @@
-package com.example.smartspend.config;
-
-
-
-/*
-   Global CORS configuration so that Vercel frontend
-   can call Railway backend without being blocked.
-*/
+package com.smartspend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,12 +15,12 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins(
-                                "https://smartspend-flame.vercel.app", // Vercel frontend
-                                "http://localhost:8080"               // local testing (optional)
+                                "https://smartspend-flame.vercel.app",
+                                "http://localhost:8080"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowCredentials(false)
+                        .allowCredentials(true)
                         .maxAge(3600);
             }
         };
