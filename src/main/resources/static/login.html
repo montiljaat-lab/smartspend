@@ -49,7 +49,13 @@
       }
 
       try {
+<<<<<<< HEAD
         const resp = await fetch("https://smartspend-production-d76a.up.railway.app/api/auth/login", {
+=======
+      const resp = await fetch("https://smartspend-production-d76a.up.railway.app/api/auth/login", {
+
+          method: "POST",
+>>>>>>> 67470049315515719bae8eea1e4a7cb308e6e75d
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({ email, password })
         });
