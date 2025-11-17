@@ -9,43 +9,47 @@
   <div class="auth-container">
     <h1 class="auth-title">Welcome Back</h1>
 
-    <div class="auth-field">
-      <label>Email</label>
-      <input type="email" id="loginEmail" placeholder="you@example.com" />
-    </div>
+    <form id="loginForm">
 
-    <div class="auth-field">
-      <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" />
-    </div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" />
+      </div>
 
-    <button id="loginBtn" class="auth-button">Sign In</button>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" />
+      </div>
 
-    <div id="loginMessage" class="auth-message"></div>
+      <button id="loginBtn" class="auth-button" type="submit">Sign In</button>
 
-    <p class="auth-footer">
-      Need an account?
-      <a href="register.html">Register</a>
-    </p>
+      <div id="loginMessage" class="auth-message"></div>
+
+      <p class="auth-footer">
+        Need an account?
+        <a href="register.html">Register</a>
+      </p>
+
+    </form>
   </div>
 
- <script>
+<script>
   const API_BASE_URL = "https://smartspend-production-d76a.up.railway.app";
 
   const form = document.getElementById("loginForm");
-  const msg = document.getElementById("msg");
-  const submitBtn = document.getElementById("submitBtn");
+  const msg = document.getElementById("loginMessage");
+  const submitBtn = document.getElementById("loginBtn");
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     msg.textContent = "";
-    msg.className = "message";
+    msg.className = "auth-message";
     submitBtn.disabled = true;
 
     const payload = {
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value
+      email: document.getElementById("loginEmail").value,
+      password: document.getElementById("loginPassword").value
     };
 
     try {
@@ -61,11 +65,14 @@
 
       if (!response.ok) {
         msg.textContent = "Login failed: " + txt;
-        msg.className = "message error";
+        msg.classList.remove("success");
+        msg.classList.add("error");
       } else {
         msg.textContent = "Login successful!";
-        msg.className = "message success";
+        msg.classList.remove("error");
+        msg.classList.add("success");
 
+        // baad me yahin se dashboard pe bhejenge
         setTimeout(() => {
           window.location.href = "dashboard.html";
         }, 1500);
@@ -73,7 +80,8 @@
     } catch (err) {
       console.error(err);
       msg.textContent = "Network error. Please try again.";
-      msg.className = "message error";
+      msg.classList.remove("success");
+      msg.classList.add("error");
     } finally {
       submitBtn.disabled = false;
     }
