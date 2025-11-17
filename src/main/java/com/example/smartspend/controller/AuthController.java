@@ -7,6 +7,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+// 👇 YE NAYA IMPORT IMPORTANT HAI
+import org.springframework.web.bind.annotation.CrossOrigin;
+
+@CrossOrigin(
+        origins = {
+                "https://smartspend-flame.vercel.app", // Vercel frontend
+                "http://localhost:8080"               // local testing
+        },
+        maxAge = 3600
+)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -24,13 +34,10 @@ public class AuthController {
         String email = body.getOrDefault("email","").toString();
         String password = body.getOrDefault("password","").toString();
 
-        // call service (assumes AuthService.register(name,email,password) exists)
         try {
             Object result = authService.register(name, email, password);
-            // if service returns created user or token, forward it
             return ResponseEntity.ok(result);
         } catch (Exception ex) {
-            // return 400 with message
             return ResponseEntity.status(400).body(Map.of("message", ex.getMessage()));
         }
     }
@@ -49,7 +56,6 @@ public class AuthController {
         }
     }
 }
-
 
 
 
