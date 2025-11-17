@@ -7,13 +7,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-// 👇 YE NAYA IMPORT IMPORTANT HAI
+// 🟢 YEH NAYA ANNOTATION CORS FIX KARTA HAI
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 @CrossOrigin(
         origins = {
                 "https://smartspend-flame.vercel.app", // Vercel frontend
-                "http://localhost:8080"               // local testing
+                "http://localhost:8080"                // local testing
         },
         maxAge = 3600
 )
@@ -56,6 +56,3 @@ public class AuthController {
         }
     }
 }
-
-
-
