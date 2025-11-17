@@ -5,7 +5,6 @@
   <title>SmartSpend — Login</title>
   <link rel="stylesheet" href="content.css" />
 </head>
-
 <body class="auth-body">
   <div class="auth-container">
     <h1 class="auth-title">Welcome Back</h1>
@@ -25,65 +24,61 @@
     <div id="loginMessage" class="auth-message"></div>
 
     <p class="auth-footer">
-      Need an account?  
+      Need an account?
       <a href="register.html">Register</a>
     </p>
   </div>
 
-  <script>
-    // ⭐ BACKEND API (Railway)
-    const API_BASE = "https://smartspend-production-d76a.up.railway.app";
+ <script>
+  const API_BASE_URL = "https://smartspend-production-d76a.up.railway.app";
 
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value.trim();
+  const form = document.getElementById("loginForm");
+  const msg = document.getElementById("msg");
+  const submitBtn = document.getElementById("submitBtn");
 
-      const msg = document.getElementById("loginMessage");
-      msg.textContent = "";
-      msg.className = "auth-message";
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-      if (!email || !password) {
-        msg.textContent = "Please enter email & password.";
-        msg.classList.add("error");
-        return;
-      }
+    msg.textContent = "";
+    msg.className = "message";
+    submitBtn.disabled = true;
 
-      try {
-<<<<<<< HEAD
-        const resp = await fetch("https://smartspend-production-d76a.up.railway.app/api/auth/login", {
-=======
-      const resp = await fetch("https://smartspend-production-d76a.up.railway.app/api/auth/login", {
+    const payload = {
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value
+    };
 
-          method: "POST",
->>>>>>> 67470049315515719bae8eea1e4a7cb308e6e75d
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ email, password })
-        });
+    try {
+      const response = await fetch(API_BASE_URL + "/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
 
-        if (!res.ok) {
-          const text = await res.text();
-          msg.textContent = "Login failed: " + text;
-          msg.classList.add("error");
-          return;
-        }
+      const txt = await response.text();
 
-        const token = await res.text();
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("userEmail", email);
-
-        msg.textContent = "Login successful. Redirecting...";
-        msg.classList.add("success");
+      if (!response.ok) {
+        msg.textContent = "Login failed: " + txt;
+        msg.className = "message error";
+      } else {
+        msg.textContent = "Login successful!";
+        msg.className = "message success";
 
         setTimeout(() => {
-          window.location.href = "dashboard2.html";
-        }, 800);
-
-      } catch (err) {
-        msg.textContent = "Something went wrong.";
-        msg.classList.add("error");
+          window.location.href = "dashboard.html";
+        }, 1500);
       }
-    });
-  </script>
+    } catch (err) {
+      console.error(err);
+      msg.textContent = "Network error. Please try again.";
+      msg.className = "message error";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
 </body>
 </html>
