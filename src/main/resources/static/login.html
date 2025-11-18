@@ -33,138 +33,72 @@
     </form>
   </div>
 
-<script>
-  const API_BASE_URL = "https://smartspend-production-d76a.up.railway.app";
+  <!-- 🔥 IMPORTANT: iska script tag hataana nahi hai -->
+  <script>
+    const API_BASE_URL = "https://smartspend-production-d76a.up.railway.app";
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("loginForm");
-    const msg  = document.getElementById("loginMessage");
-    const btn  = document.getElementById("loginBtn");
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("loginForm");
+      const msg  = document.getElementById("loginMessage");
+      const btn  = document.getElementById("loginBtn");
 
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-      msg.textContent = "";
-      msg.className = "auth-message";
-      btn.disabled = true;
+        msg.textContent = "";
+        msg.className = "auth-message";
+        btn.disabled = true;
 
-      const payload = {
-        email: document.getElementById("loginEmail").value,
-        password: document.getElementById("loginPassword").value
-      };
+        const payload = {
+          email: document.getElementById("loginEmail").value,
+          password: document.getElementById("loginPassword").value
+        };
 
-      try {
-        const response = await fetch(API_BASE_URL + "/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        try {
+          const response = await fetch(API_BASE_URL + "/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
 
-        const raw = await response.text();
-        const trimmed = (raw || "").trim();
+          const raw = await response.text();
+          const trimmed = (raw || "").trim();
 
-        // 🔴 Agar response OK hi nahi hai -> direct fail
-        if (!response.ok) {
-          msg.textContent = "Login failed: " + (trimmed || "Invalid email or password");
+          // ❌ Agar response OK hi nahi hai -> direct fail
+          if (!response.ok) {
+            msg.textContent = "Login failed: " + (trimmed || "Invalid email or password");
+            msg.className = "auth-message error";
+            localStorage.removeItem("token");
+            btn.disabled = false;
+            return;
+          }
+
+          // ✅ Backend ne token diya to use karo, warna hum khud bana lenge
+          let token = trimmed;
+          if (!token) {
+            token = "sess-" + Date.now();   // frontend generated session id
+          }
+
+          localStorage.setItem("token", token);
+          localStorage.setItem("userEmail", payload.email);
+
+          msg.textContent = "Login successful! Redirecting...";
+          msg.className = "auth-message success";
+
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 800);
+
+        } catch (err) {
+          console.error(err);
+          msg.textContent = "Network error!";
           msg.className = "auth-message error";
-          localStorage.removeItem("token");
+        } finally {
           btn.disabled = false;
-          return;
         }
-
-        // 🟢 Yahan: agar backend ne token diya -> use karo
-        // warna hum khud ek simple session token bana lenge
-        let token = trimmed;
-        if (!token) {
-          token = "sess-" + Date.now();   // frontend generated session id
-        }
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("userEmail", payload.email);
-
-        msg.textContent = "Login successful! Redirecting...";
-        msg.className = "auth-message success";
-
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 800);
-
-      } catch (err) {
-        console.error(err);
-        msg.textContent = "Network error!";
-        msg.className = "auth-message error";
-      } finally {
-        btn.disabled = false;
-      }
+      });
     });
-  });
-</script>
-
-  const API_BASE_URL = "https://smartspend-production-d76a.up.railway.app";
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("loginForm");
-    const msg  = document.getElementById("loginMessage");
-    const btn  = document.getElementById("loginBtn");
-
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      msg.textContent = "";
-      msg.className = "auth-message";
-      btn.disabled = true;
-
-      const payload = {
-        email: document.getElementById("loginEmail").value,
-        password: document.getElementById("loginPassword").value
-      };
-
-      try {
-        const response = await fetch(API_BASE_URL + "/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const raw = await response.text();
-        const trimmed = (raw || "").trim();
-
-        // 🔴 Agar response OK hi nahi hai -> direct fail
-        if (!response.ok) {
-          msg.textContent = "Login failed: " + (trimmed || "Invalid email or password");
-          msg.className = "auth-message error";
-          localStorage.removeItem("token");
-          btn.disabled = false;
-          return;
-        }
-
-        // 🟢 Yahan: agar backend ne token diya -> use karo
-        // warna hum khud ek simple session token bana lenge
-        let token = trimmed;
-        if (!token) {
-          token = "sess-" + Date.now();   // frontend generated session id
-        }
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("userEmail", payload.email);
-
-        msg.textContent = "Login successful! Redirecting...";
-        msg.className = "auth-message success";
-
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 800);
-
-      } catch (err) {
-        console.error(err);
-        msg.textContent = "Network error!";
-        msg.className = "auth-message error";
-      } finally {
-        btn.disabled = false;
-      }
-    });
-  });
-</script>
+  </script>
 
 </body>
 </html>

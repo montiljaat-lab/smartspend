@@ -1033,6 +1033,35 @@
     });
 
   });
+    // ===========================
+    //   NAV TABS: OVERVIEW / BUDGET / INSIGHTS
+    // ===========================
+    const tabs = document.querySelectorAll(".nav-tab");
+
+    const sections = {
+      overview: document.getElementById("overviewSection"),
+      budget: document.getElementById("budgetSection"),
+      insights: document.getElementById("insightsSection")
+    };
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        const target = tab.dataset.tab; // "overview" / "budget" / "insights"
+
+        // sab sections hide
+        Object.values(sections).forEach(sec => {
+          sec.style.display = "none";
+        });
+
+        // selected section show
+        sections[target].style.display = "block";
+
+        // active class switch
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+      });
+    });
+
 </script>
 
 
