@@ -1034,6 +1034,88 @@
 
   });
     // ===========================
+    //   PROFILE MODAL (OPEN / CLOSE / SAVE)
+    // ===========================
+    const profileBtn     = document.getElementById("profileBtn");
+    const profileModal   = document.getElementById("profileModal");
+    const closeProfile   = document.getElementById("closeProfile");
+    const saveProfileBtn = document.getElementById("saveProfileBtn");
+
+    const profName    = document.getElementById("profName");
+    const profEmail   = document.getElementById("profEmail");
+    const profPhone   = document.getElementById("profPhone");
+    const profCountry = document.getElementById("profCountry");
+
+    const avatarPreview = document.getElementById("avatarPreview");
+    const avatarInput   = document.getElementById("avatarInput");
+
+    function loadProfileFromStorage() {
+      const storedName    = localStorage.getItem("profileName")    || "";
+      const storedPhone   = localStorage.getItem("profilePhone")   || "";
+      const storedCountry = localStorage.getItem("profileCountry") || "";
+      const storedAvatar  = localStorage.getItem("profileAvatar")  || "";
+      const userEmail     = localStorage.getItem("userEmail")      || "";
+
+      profName.value    = storedName;
+      profPhone.value   = storedPhone;
+      profCountry.value = storedCountry;
+      profEmail.value   = userEmail;
+
+      if (storedAvatar) {
+        avatarPreview.src = storedAvatar;
+      }
+    }
+
+    function openProfileModal() {
+      loadProfileFromStorage();
+      profileModal.classList.remove("hidden");
+    }
+
+    function closeProfileModal() {
+      profileModal.classList.add("hidden");
+    }
+
+    profileBtn.addEventListener("click", openProfileModal);
+    closeProfile.addEventListener("click", closeProfileModal);
+
+    // Agar background dark area par click kare to bhi close ho
+    profileModal.addEventListener("click", (e) => {
+      if (e.target === profileModal) {
+        closeProfileModal();
+      }
+    });
+
+    // Avatar image preview
+    avatarInput.addEventListener("change", () => {
+      const file = avatarInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        avatarPreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Save profile button
+    saveProfileBtn.addEventListener("click", () => {
+      localStorage.setItem("profileName",    profName.value.trim());
+      localStorage.setItem("profilePhone",   profPhone.value.trim());
+      localStorage.setItem("profileCountry", profCountry.value.trim());
+
+      // Avatar ko bhi store kar sakte hain (agar base64 laga hua hai)
+      if (avatarPreview.src && avatarPreview.src.startsWith("data:image")) {
+        localStorage.setItem("profileAvatar", avatarPreview.src);
+      }
+
+      // Chhota sa feedback
+      saveProfileBtn.textContent = "Saved ✔";
+      setTimeout(() => {
+        saveProfileBtn.textContent = "Save Profile";
+      }, 1000);
+    });
+
+    // ===========================
     //   NAV TABS: OVERVIEW / BUDGET / INSIGHTS
     // ===========================
     const tabs = document.querySelectorAll(".nav-tab");

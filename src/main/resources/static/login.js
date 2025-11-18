@@ -1,74 +1,47 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("loginForm");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const msg = document.getElementById("loginMsg");
+const API_BASE = "https://smartspend-production-d76a.up.railway.app";
 
-    function clearMessage() {
-        msg.textContent = "";
-        msg.classList.remove("error", "success");
+document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const msg = document.getElementById("loginMessage");
+
+    msg.textContent = "";
+    
+    if (!email || !password) {
+        msg.textContent = "Please fill all fields.";
+        msg.style.color = "red";
+        return;
     }
 
-    function showMessage(text, type) {
-        msg.textContent = text;
-        msg.classList.remove("error", "success");
-        if (type) msg.classList.add(type); // "error" / "success"
-    }
+    try {
+        const res = await fetch(API_BASE + "/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        clearMessage();
-
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-
-        if (!email || !password) {
-            showMessage("Please enter both email and password.", "error");
+        const data = await res.json();
+        
+        if (!res.ok) {
+            msg.textContent = data.message || "Invalid credentials";
+            msg.style.color = "red";
             return;
         }
 
-        try {
-            // form-urlencoded body (Spring ke saath friendly)
-            const body = new URLSearchParams();
-            body.append("email", email);
-            body.append("password", password);
+        // SUCCESS
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userEmail", email);
 
-            const resp = await fetch("/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: body.toString()
-            });
+        msg.textContent = "Login successful!";
+        msg.style.color = "lightgreen";
 
-            if (!resp.ok) {
-                const txt = (await resp.text()).trim();
-                if (resp.status === 401) {
-                    showMessage("Invalid email or password. Please register first.", "error");
-                } else {
-                    showMessage(txt || "Login failed. Try again.", "error");
-                }
-                return;
-            }
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 700);
 
-            const token = (await resp.text()).trim();
-            if (!token) {
-                showMessage("Login succeeded but token missing. Contact developer.", "error");
-                return;
-            }
-
-            localStorage.setItem("token", token);
-            localStorage.setItem("loggedInEmail", email);
-
-            showMessage("Login successful! Redirecting…", "success");
-
-            setTimeout(() => {
-                window.location.href = "dashboard2.html";
-            }, 600);
-
-        } catch (err) {
-            console.error(err);
-            showMessage("Something went wrong while logging in. Check server.", "error");
-        }
-    });
+    } catch (err) {
+        msg.textContent = "Network error!";
+        msg.style.color = "red";
+        console.error(err);
+    }
 });
