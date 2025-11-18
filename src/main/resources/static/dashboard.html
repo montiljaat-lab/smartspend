@@ -1,9 +1,12 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+   <head>
     <meta charset="UTF-8">
-    <title>SmartSpend — AI Expense Dashboard</title>
+    <title>SmartSpend — Track your spending </title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
 
     <style>
         :root {
@@ -605,6 +608,18 @@
             .page-header { flex-direction: column; align-items: flex-start; }
             .bar-row { grid-template-columns: 80px 1fr 80px; }
         }
+.brand-logo {
+  height: 38px;
+  width: auto;
+  margin-right: 8px;
+  filter: drop-shadow(0 0 4px gold);
+}
+
+.logo-text {
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
     </style>
 </head>
 
@@ -612,11 +627,11 @@
 
 <header>
     <div class="header-left">
-        <div class="logo-row">
-            <div class="logo">
-                <span class="logo-dot"></span>
-                SMARTSPEND
-            </div>
+        <div class="logo-row"><div class="logo">
+    <img src="logo.png" class="brand-logo" alt="SmartSpend Logo">
+    <span class="logo-text">SMARTSPEND</span>
+</div>
+
             <span class="pill">AI Expense Tracker</span>
         </div>
         <div class="logo-sub">STAY ON TOP OF EVERY RUPEE.</div>
