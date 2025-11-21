@@ -1,23 +1,20 @@
 package com.example.smartspend.service;
 
-
 import com.example.smartspend.model.Expense;
-import com.example.smartspend.repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class ExpenseService {
 
-    private final ExpenseRepository repo;
+    // 🔹 Simple in-memory list (ye sirf backup / old code ke liye hai)
+    private final List<Expense> expenses = new CopyOnWriteArrayList<>();
 
-    public ExpenseService(ExpenseRepository repo) {
-        this.repo = repo;
-    }
-
-    // Yeh method naam/params hum jane-bujhe same rakh rahe hain
+    // Yeh method naam/params hum same rakh rahe hain
     // taaki agar koi purana controller isko call kar raha ho to error na aaye
     public void addExpense(Long userId, String title, double amount, String category) {
         Expense expense = new Expense();
@@ -25,19 +22,17 @@ public class ExpenseService {
         expense.setCategory(category);
         expense.setAmount(amount);
         expense.setCreatedAt(LocalDateTime.now());
-        // userId field hum ignore kar rahe hain (demo project)
-        repo.save(expense);
+        // userId ignore kar rahe hain (demo ke liye)
+        expenses.add(expense);
     }
 
-    // Purana "getExpensesForUser" bhi rakhenge, par simple bana ke
+    // Purana "getExpensesForUser" — ab sabhi stored expenses return karega
     public List<Expense> getExpensesForUser(Long userId) {
-        // Abhi ke liye userId ignore, sirf sab expenses return kar rahe
-        return repo.findAll();
+        return new ArrayList<>(expenses);
     }
 
-    // Purana delete method bhi simple bana diya
+    // Purana delete method — sab expenses clear kar dega
     public void deleteExpensesForUser(Long userId) {
-        // User ke hisaab se delete nahi, sab delete (demo/cleanup)
-        repo.deleteAll();
+        expenses.clear();
     }
 }
