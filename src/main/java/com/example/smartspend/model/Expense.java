@@ -15,6 +15,8 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    private String sessionId;
+
     private String title;
 
     private String category;

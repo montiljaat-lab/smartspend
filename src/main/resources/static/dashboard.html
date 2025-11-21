@@ -3,7 +3,8 @@
 <head>
    <head>
     <meta charset="UTF-8">
-    <title>SmartSpend — Track your spending </title>
+    <title>SmartSpend — Track Your Spending</title>
+
     <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -632,7 +633,7 @@
     <span class="logo-text">SMARTSPEND</span>
 </div>
 
-            <span class="pill">AI Expense Tracker</span>
+            <span class="pill">track your spending</span>
         </div>
         <div class="logo-sub">STAY ON TOP OF EVERY RUPEE.</div>
         <div class="nav-tabs">
@@ -692,7 +693,8 @@
             </div>
             <div id="dashMsg"></div>
             <div class="token-text">
-                Session ID: <span id="tokenPreview"></span>
+               <p>Session ID: <span id="sessionIdSpan"></span></p>
+
             </div>
         </div>
 
@@ -890,6 +892,21 @@
 </div>
 
 <script>
+// ====== SESSION ID SETUP (B2.1) ======
+let sessionId = localStorage.getItem("smartspend_session_id");
+
+// Agar pehli baar user aa raha hai to naya sessionId banao
+if (!sessionId) {
+  sessionId = "sess-" + Date.now(); // simple unique id
+  localStorage.setItem("smartspend_session_id", sessionId);
+}
+
+// HTML me show karo
+const sessionIdSpan = document.getElementById("sessionIdSpan");
+if (sessionIdSpan) {
+  sessionIdSpan.textContent = sessionId;
+}
+
   const API_BASE = "https://smartspend-production-d76a.up.railway.app";
   const MONTHLY_LIMIT = 5000;
 
