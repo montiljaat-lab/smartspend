@@ -692,13 +692,8 @@
                 </button>
             </div>
             <div id="dashMsg"></div>
-            <div class="token-text">
-               <p>Session ID: <span id="sessionIdSpan"></span></p>
-<p style="margin-top:10px; color:#9bbbd1;">
-    Session ID: <span id="sessionIdSpan"></span>
-</p>
-
-
+            <div class="token-text" style="margin-top:10px; color:#9bbbd1;">
+                Session ID: <span id="sessionIdSpan"></span>
             </div>
         </div>
 
@@ -896,7 +891,7 @@
 </div>
 
 <script>
-// ====== SESSION ID SETUP (B2.1) ======
+// ====== SESSION ID SETUP ======
 let sessionId = localStorage.getItem("smartspend_session_id");
 
 // Agar pehli baar user aa raha hai to naya sessionId banao
@@ -911,278 +906,413 @@ if (sessionIdSpan) {
   sessionIdSpan.textContent = sessionId;
 }
 
-  const API_BASE = "https://smartspend-production-d76a.up.railway.app";
-  const MONTHLY_LIMIT = 5000;
+// BACKEND BASE URL (Railway)
+const API_BASE = "https://smartspend-production-d76a.up.railway.app";
+const MONTHLY_LIMIT = 5000;
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const tbody = document.getElementById("expenseBody");
-    const dashMsg = document.getElementById("dashMsg");
-    const tokenPreview = document.getElementById("tokenPreview");
+document.addEventListener("DOMContentLoaded", () => {
+  const tbody = document.getElementById("expenseBody");
+  const dashMsg = document.getElementById("dashMsg");
+  const tokenPreview = document.getElementById("tokenPreview"); // optional (null ho sakta)
 
-    // Load token
-    const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "login.html";
-      return;
-    }
+// Load token
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "login.html";
+    return;
+  }
+  if (tokenPreview) {
     tokenPreview.textContent = token;
+  }
 
-    // Render empty row helper
-    function renderEmptyRow() {
-      tbody.innerHTML = `<tr><td colspan="5" class="muted">No expenses yet. Add your first one above.</td></tr>`;
-    }
+  // Render empty row helper
+  function renderEmptyRow() {
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">No expenses yet. Add your first one above.</td></tr>`;
+  }
 
-    // ===========================
-    //   LOAD EXPENSES
-    // ===========================
-    async function loadExpenses() {
-      try {
-        dashMsg.textContent = "";
-        dashMsg.className = "";
-
-        const res = await fetch(API_BASE + "/api/expenses/list", {
-          headers: {
-            "Authorization": token
-          }
-        });
-
-        if (!res.ok) throw new Error("Failed to load");
-
-        const data = await res.json();
-        tbody.innerHTML = "";
-
-        if (!Array.isArray(data) || data.length === 0) {
-          renderEmptyRow();
-          document.getElementById("totalSpent").textContent = "₹0";
-          document.getElementById("todaySpent").textContent = "₹0";
-          document.getElementById("remainingBudget").textContent = "₹" + MONTHLY_LIMIT;
-          return;
-        }
-
-        let total = 0;
-        let todayTotal = 0;
-        const today = new Date().toISOString().slice(0, 10);
-
-        data.forEach(e => {
-          const amt = Number(e.amount) || 0;
-          total += amt;
-
-          let when = "—";
-          if (e.createdAt) {
-            const d = new Date(e.createdAt);
-            if (!isNaN(d)) {
-              when = d.toLocaleString();
-              if (d.toISOString().slice(0, 10) === today) {
-                todayTotal += amt;
-              }
-            }
-          }
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${e.title}</td>
-            <td><span class="tag">${e.category}</span></td>
-            <td>${e.method || "N/A"}</td>
-            <td>₹${amt}</td>
-            <td>${when}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        document.getElementById("totalSpent").textContent = "₹" + total;
-        document.getElementById("todaySpent").textContent = "₹" + todayTotal;
-        document.getElementById("remainingBudget").textContent = "₹" + (MONTHLY_LIMIT - total);
-
-      } catch (err) {
-        console.error(err);
-        dashMsg.textContent = "Could not load expenses from server.";
-        dashMsg.className = "error";
-        renderEmptyRow();
-      }
-    }
-
-    loadExpenses();
-
-    // ===========================
-    //   ADD EXPENSE
-    // ===========================
-    document.getElementById("addExpenseBtn").addEventListener("click", async () => {
-      const title = document.getElementById("expTitle").value.trim();
-      const amount = Number(document.getElementById("expAmount").value);
-      const category = document.getElementById("expCategory").value;
-      const method = document.getElementById("expMethod")?.value || "N/A";
-      const date = document.getElementById("expDate").value;
-
+  // ===========================
+  //   LOAD EXPENSES
+  // ===========================
+  async function loadExpenses() {
+    try {
       dashMsg.textContent = "";
       dashMsg.className = "";
 
-      if (!title || !amount) {
-        dashMsg.textContent = "Please enter title & amount.";
+      const res = await fetch(
+        API_BASE + "/api/expenses/list?sessionId=" + encodeURIComponent(sessionId),
+        {
+          headers: {
+            "Authorization": token
+          }
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to load");
+
+      const data = await res.json();
+      tbody.innerHTML = "";
+
+      if (!Array.isArray(data) || data.length === 0) {
+        renderEmptyRow();
+        document.getElementById("totalSpent").textContent = "₹0";
+        document.getElementById("todaySpent").textContent = "₹0";
+        document.getElementById("remainingBudget").textContent = "₹" + MONTHLY_LIMIT;
+        return;
+      }
+
+      let total = 0;
+      let todayTotal = 0;
+      const today = new Date().toISOString().slice(0, 10);
+
+      data.forEach(e => {
+        const amt = Number(e.amount) || 0;
+        total += amt;
+
+        let when = "—";
+        if (e.createdAt) {
+          const d = new Date(e.createdAt);
+          if (!isNaN(d)) {
+            when = d.toLocaleString();
+            if (d.toISOString().slice(0, 10) === today) {
+              todayTotal += amt;
+            }
+          }
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${e.title}</td>
+          <td><span class="tag">${e.category}</span></td>
+          <td>${e.method || "N/A"}</td>
+          <td>₹${amt}</td>
+          <td>${when}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("totalSpent").textContent = "₹" + total;
+      document.getElementById("todaySpent").textContent = "₹" + todayTotal;
+      document.getElementById("remainingBudget").textContent = "₹" + (MONTHLY_LIMIT - total);
+
+    } catch (err) {
+      console.error(err);
+      dashMsg.textContent = "Could not load expenses from server.";
+      dashMsg.className = "error";
+      renderEmptyRow();
+    }
+  }
+
+  loadExpenses();
+
+  // ===========================
+  //   ADD EXPENSE
+  // ===========================
+  document.getElementById("addExpenseBtn").addEventListener("click", async () => {
+    const title = document.getElementById("expTitle").value.trim();
+    const amount = Number(document.getElementById("expAmount").value);
+    const category = document.getElementById("expCategory").value;
+    const method = document.getElementById("expMethod")?.value || "N/A";
+    const date = document.getElementById("expDate").value;
+
+    dashMsg.textContent = "";
+    dashMsg.className = "";
+
+    if (!title || !amount) {
+      dashMsg.textContent = "Please enter title & amount.";
+      dashMsg.classList.add("error");
+      return;
+    }
+
+    try {
+      const res = await fetch(API_BASE + "/api/expenses/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,     // IMPORTANT: per-user data
+          title,
+          amount,
+          category,
+          method,
+          date: date || null
+        })
+      });
+
+      if (!res.ok) {
+        const errorTxt = await res.text();
+        dashMsg.textContent = "Failed to add: " + errorTxt;
         dashMsg.classList.add("error");
         return;
       }
 
-      try {
-        const res = await fetch(API_BASE + "/api/expenses/add", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": token
-          },
-          body: JSON.stringify({
-            title,
-            amount,
-            category,
-            method,
-            date: date || null
-          })
-        });
+      dashMsg.textContent = "Expense added successfully!";
+      dashMsg.classList.add("success");
 
-        if (!res.ok) {
-          const errorTxt = await res.text();
-          dashMsg.textContent = "Failed to add: " + errorTxt;
-          dashMsg.classList.add("error");
-          return;
-        }
+      document.getElementById("expTitle").value = "";
+      document.getElementById("expAmount").value = "";
 
-        dashMsg.textContent = "Expense added successfully!";
-        dashMsg.classList.add("success");
+      loadExpenses();
 
-        document.getElementById("expTitle").value = "";
-        document.getElementById("expAmount").value = "";
-
-        loadExpenses();
-
-      } catch (err) {
-        dashMsg.textContent = "Network error.";
-        dashMsg.classList.add("error");
-      }
-    });
-
-    // ===========================
-    //   LOGOUT
-    // ===========================
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userEmail");
-      window.location.href = "login.html";
-    });
-
+    } catch (err) {
+      dashMsg.textContent = "Network error.";
+      dashMsg.classList.add("error");
+    }
   });
-    // ===========================
-    //   PROFILE MODAL (OPEN / CLOSE / SAVE)
-    // ===========================
-    const profileBtn     = document.getElementById("profileBtn");
-    const profileModal   = document.getElementById("profileModal");
-    const closeProfile   = document.getElementById("closeProfile");
-    const saveProfileBtn = document.getElementById("saveProfileBtn");
 
-    const profName    = document.getElementById("profName");
-    const profEmail   = document.getElementById("profEmail");
-    const profPhone   = document.getElementById("profPhone");
-    const profCountry = document.getElementById("profCountry");
+  // ===========================
+  //   BUDGET SNAPSHOTS (LOCAL)
+  // ===========================
+  const budgetMsg = document.getElementById("budgetMsg");
+  const budgetBody = document.getElementById("budgetBody");
 
-    const avatarPreview = document.getElementById("avatarPreview");
-    const avatarInput   = document.getElementById("avatarInput");
+  const budgetType = document.getElementById("budgetType");
+  const budgetAmount = document.getElementById("budgetAmount");
+  const budgetDate = document.getElementById("budgetDate");
+  const budgetNote = document.getElementById("budgetNote");
 
-    function loadProfileFromStorage() {
-      const storedName    = localStorage.getItem("profileName")    || "";
-      const storedPhone   = localStorage.getItem("profilePhone")   || "";
-      const storedCountry = localStorage.getItem("profileCountry") || "";
-      const storedAvatar  = localStorage.getItem("profileAvatar")  || "";
-      const userEmail     = localStorage.getItem("userEmail")      || "";
+  const budgetTotals = {
+    cash: document.getElementById("budgetTotalCash"),
+    bank: document.getElementById("budgetTotalBank"),
+    card: document.getElementById("budgetTotalCard"),
+    debt: document.getElementById("budgetTotalDebt"),
+    savings: document.getElementById("budgetTotalSavings"),
+    netWorth: document.getElementById("budgetNetWorth")
+  };
 
-      profName.value    = storedName;
-      profPhone.value   = storedPhone;
-      profCountry.value = storedCountry;
-      profEmail.value   = userEmail;
+  function getBudgetKey() {
+    return "smartspend_budget_" + sessionId;
+  }
 
-      if (storedAvatar) {
-        avatarPreview.src = storedAvatar;
-      }
+  function loadBudgetItems() {
+    const raw = localStorage.getItem(getBudgetKey());
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error("Budget parse error", e);
+      return [];
     }
+  }
 
-    function openProfileModal() {
-      loadProfileFromStorage();
-      profileModal.classList.remove("hidden");
-    }
+  function saveBudgetItems(items) {
+    localStorage.setItem(getBudgetKey(), JSON.stringify(items));
+  }
 
-    function closeProfileModal() {
-      profileModal.classList.add("hidden");
-    }
+  function renderBudget(items) {
+    budgetBody.innerHTML = "";
 
-    profileBtn.addEventListener("click", openProfileModal);
-    closeProfile.addEventListener("click", closeProfileModal);
-
-    // Agar background dark area par click kare to bhi close ho
-    profileModal.addEventListener("click", (e) => {
-      if (e.target === profileModal) {
-        closeProfileModal();
-      }
-    });
-
-    // Avatar image preview
-    avatarInput.addEventListener("change", () => {
-      const file = avatarInput.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        avatarPreview.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Save profile button
-    saveProfileBtn.addEventListener("click", () => {
-      localStorage.setItem("profileName",    profName.value.trim());
-      localStorage.setItem("profilePhone",   profPhone.value.trim());
-      localStorage.setItem("profileCountry", profCountry.value.trim());
-
-      // Avatar ko bhi store kar sakte hain (agar base64 laga hua hai)
-      if (avatarPreview.src && avatarPreview.src.startsWith("data:image")) {
-        localStorage.setItem("profileAvatar", avatarPreview.src);
-      }
-
-      // Chhota sa feedback
-      saveProfileBtn.textContent = "Saved ✔";
-      setTimeout(() => {
-        saveProfileBtn.textContent = "Save Profile";
-      }, 1000);
-    });
-
-    // ===========================
-    //   NAV TABS: OVERVIEW / BUDGET / INSIGHTS
-    // ===========================
-    const tabs = document.querySelectorAll(".nav-tab");
-
-    const sections = {
-      overview: document.getElementById("overviewSection"),
-      budget: document.getElementById("budgetSection"),
-      insights: document.getElementById("insightsSection")
-    };
-
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        const target = tab.dataset.tab; // "overview" / "budget" / "insights"
-
-        // sab sections hide
-        Object.values(sections).forEach(sec => {
-          sec.style.display = "none";
-        });
-
-        // selected section show
-        sections[target].style.display = "block";
-
-        // active class switch
-        tabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
+    if (!items.length) {
+      budgetBody.innerHTML = `<tr><td colspan="4" class="muted">No snapshots yet. Add your first one above.</td></tr>`;
+    } else {
+      items.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.type}</td>
+          <td>₹${item.amount}</td>
+          <td>${item.date || "—"}</td>
+          <td>${item.note || "—"}</td>
+        `;
+        budgetBody.appendChild(tr);
       });
+    }
+
+    // totals
+    let totalCash = 0, totalBank = 0, totalCard = 0;
+    let debtOwed = 0, debtToReceive = 0;
+    let totalSavings = 0;
+
+    items.forEach(item => {
+      const amt = Number(item.amount) || 0;
+      switch (item.type) {
+        case "Cash": totalCash += amt; break;
+        case "Bank": totalBank += amt; break;
+        case "Card": totalCard += amt; break;
+        case "DebtOwed": debtOwed += amt; break;
+        case "DebtToReceive": debtToReceive += amt; break;
+        case "Savings": totalSavings += amt; break;
+      }
     });
 
+    const netDebt = debtOwed - debtToReceive;
+    const netWorth = totalSavings + totalCash + totalBank - netDebt;
+
+    budgetTotals.cash.textContent = "₹" + totalCash;
+    budgetTotals.bank.textContent = "₹" + totalBank;
+    budgetTotals.card.textContent = "₹" + totalCard;
+    budgetTotals.debt.textContent = "₹" + netDebt;
+    budgetTotals.savings.textContent = "₹" + totalSavings;
+    budgetTotals.netWorth.textContent = "₹" + netWorth;
+  }
+
+  function refreshBudget() {
+    const items = loadBudgetItems();
+    renderBudget(items);
+  }
+
+  document.getElementById("addBudgetBtn").addEventListener("click", () => {
+    budgetMsg.textContent = "";
+    budgetMsg.className = "";
+
+    const type = budgetType.value;
+    const amountVal = Number(budgetAmount.value);
+    let dateVal = budgetDate.value;
+    const noteVal = budgetNote.value.trim();
+
+    if (!amountVal || amountVal <= 0) {
+      budgetMsg.textContent = "Please enter a valid amount.";
+      budgetMsg.classList.add("error");
+      return;
+    }
+
+    if (!dateVal) {
+      dateVal = new Date().toISOString().slice(0,10);
+    }
+
+    const items = loadBudgetItems();
+    items.push({
+      type,
+      amount: amountVal,
+      date: dateVal,
+      note: noteVal
+    });
+    saveBudgetItems(items);
+    renderBudget(items);
+
+    budgetMsg.textContent = "Snapshot added!";
+    budgetMsg.classList.add("success");
+
+    budgetAmount.value = "";
+    budgetNote.value = "";
+  });
+
+  // initial load
+  refreshBudget();
+
+  // ===========================
+  //   LOGOUT
+  // ===========================
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
+    window.location.href = "login.html";
+  });
+
+}); // DOMContentLoaded end
+
+// ===========================
+//   PROFILE MODAL (OPEN / CLOSE / SAVE)
+// ===========================
+const profileBtn     = document.getElementById("profileBtn");
+const profileModal   = document.getElementById("profileModal");
+const closeProfile   = document.getElementById("closeProfile");
+const saveProfileBtn = document.getElementById("saveProfileBtn");
+
+const profName    = document.getElementById("profName");
+const profEmail   = document.getElementById("profEmail");
+const profPhone   = document.getElementById("profPhone");
+const profCountry = document.getElementById("profCountry");
+
+const avatarPreview = document.getElementById("avatarPreview");
+const avatarInput   = document.getElementById("avatarInput");
+
+function loadProfileFromStorage() {
+  const storedName    = localStorage.getItem("profileName")    || "";
+  const storedPhone   = localStorage.getItem("profilePhone")   || "";
+  const storedCountry = localStorage.getItem("profileCountry") || "";
+  const storedAvatar  = localStorage.getItem("profileAvatar")  || "";
+  const userEmail     = localStorage.getItem("userEmail")      || "";
+
+  profName.value    = storedName;
+  profPhone.value   = storedPhone;
+  profCountry.value = storedCountry;
+  profEmail.value   = userEmail;
+
+  if (storedAvatar) {
+    avatarPreview.src = storedAvatar;
+  }
+}
+
+function openProfileModal() {
+  loadProfileFromStorage();
+  profileModal.classList.remove("hidden");
+}
+
+function closeProfileModal() {
+  profileModal.classList.add("hidden");
+}
+
+profileBtn.addEventListener("click", openProfileModal);
+closeProfile.addEventListener("click", closeProfileModal);
+
+// Agar background dark area par click kare to bhi close ho
+profileModal.addEventListener("click", (e) => {
+  if (e.target === profileModal) {
+    closeProfileModal();
+  }
+});
+
+// Avatar image preview
+avatarInput.addEventListener("change", () => {
+  const file = avatarInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    avatarPreview.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// Save profile button
+saveProfileBtn.addEventListener("click", () => {
+  localStorage.setItem("profileName",    profName.value.trim());
+  localStorage.setItem("profilePhone",   profPhone.value.trim());
+  localStorage.setItem("profileCountry", profCountry.value.trim());
+
+  // Avatar ko bhi store kar sakte hain (agar base64 laga hua hai)
+  if (avatarPreview.src && avatarPreview.src.startsWith("data:image")) {
+    localStorage.setItem("profileAvatar", avatarPreview.src);
+  }
+
+  // Chhota sa feedback
+  saveProfileBtn.textContent = "Saved ✔";
+  setTimeout(() => {
+    saveProfileBtn.textContent = "Save Profile";
+  }, 1000);
+});
+
+// ===========================
+//   NAV TABS: OVERVIEW / BUDGET / INSIGHTS
+// ===========================
+const tabs = document.querySelectorAll(".nav-tab");
+
+const sections = {
+  overview: document.getElementById("overviewSection"),
+  budget: document.getElementById("budgetSection"),
+  insights: document.getElementById("insightsSection")
+};
+
+tabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.tab; // "overview" / "budget" / "insights"
+
+    // sab sections hide
+    Object.values(sections).forEach(sec => {
+      sec.style.display = "none";
+    });
+
+    // selected section show
+    sections[target].style.display = "block";
+
+    // active class switch
+    tabs.forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+  });
+});
 </script>
-
-
 
 </body>
 </html>
