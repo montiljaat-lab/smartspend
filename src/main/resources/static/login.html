@@ -1,104 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>SmartSpend — Login</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+      --card-bg: rgba(15, 23, 42, 0.96);
+      --card-border: rgba(148, 163, 184, 0.3);
+      --accent: #06b6d4;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --danger: #fb7185;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 26px;
+      align-items: center;
+    }
+
+    .left {
+      padding: 30px 26px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.18), transparent 60%),
+        rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .brand-logo {
+      height: 42px;
+      filter: drop-shadow(0 0 6px gold);
+    }
+
+    .brand-name {
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      font-size: 20px;
+    }
+
+    .tagline {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .hero-text {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 380px;
+      line-height: 1.5;
+    }
+
+    .right {
+      padding: 24px 22px 20px;
+      border-radius: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.9);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+
+    .sub {
+      margin: 0 0 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+    }
+
+    input::placeholder { color: #6b7280; }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 4px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: none;
+      background: radial-gradient(circle at top left, #22d3ee, #0ea5e9);
+      color: #020617;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(56, 189, 248, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+    }
+
+    .msg {
+      margin-top: 8px;
+      font-size: 12px;
+      min-height: 16px;
+    }
+
+    .msg.error { color: var(--danger); }
+    .msg.success { color: #4ade80; }
+
+    .small-link {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .small-link a {
+      color: #38bdf8;
+      text-decoration: none;
+    }
+
+    .small-link a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .left {
+        display: none;
+      }
+    }
+  </style>
 </head>
-
-<body class="auth-body">
-
-  <div class="auth-container">
-    <h1 class="auth-title">Welcome Back</h1>
-
-    <form id="loginForm">
-      <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" required>
+<body>
+<div class="shell">
+  <section class="left">
+    <div class="brand-row">
+      <img src="logo.png" alt="SmartSpend logo" class="brand-logo" />
+      <div>
+        <div class="brand-name">SMARTSPEND</div>
+        <div class="tagline">TRACK YOUR SPENDING</div>
       </div>
+    </div>
+    <div class="hero-text">Welcome back 👋</div>
+    <p class="hero-sub">
+      Log in to your SmartSpend account to add today’s expenses, update your budget
+      and see whether you’re within your safe spending range.
+    </p>
+  </section>
 
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Your password" required>
-      </div>
+  <section class="right">
+    <h2>Sign in</h2>
+    <p class="sub">Use the email and password you registered with.</p>
 
-      <button id="loginBtn" class="auth-button" type="submit">Sign In</button>
+    <div class="field">
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" type="email" placeholder="you@example.com" />
+    </div>
+    <div class="field">
+      <label for="loginPassword">Password</label>
+      <input id="loginPassword" type="password" placeholder="Your password" />
+    </div>
 
-      <div id="loginMessage" class="auth-message"></div>
+    <button id="loginBtn" class="btn-primary" type="button">
+      Sign In
+    </button>
 
-      <p class="auth-footer">
-        Need an account?
-        <a href="register.html">Register</a>
-      </p>
-    </form>
-  </div>
+    <div id="loginMsg" class="msg"></div>
 
-  <!-- 🔥 IMPORTANT: iska script tag hataana nahi hai -->
-  <script>
-    const API_BASE_URL = "https://smartspend-production-d76a.up.railway.app";
+    <div class="small-link">
+      New to SmartSpend?
+      <a href="register.html">Create an account</a>
+    </div>
+    <div class="small-link" style="margin-top:6px;">
+      ← Back to <a href="index.html">home</a>
+    </div>
+  </section>
+</div>
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById("loginForm");
-      const msg  = document.getElementById("loginMessage");
-      const btn  = document.getElementById("loginBtn");
+<script>
+  const API_BASE = "https://smartspend-production-d76a.up.railway.app";
 
-      form.addEventListener("submit", async function (e) {
-        e.preventDefault();
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
 
-        msg.textContent = "";
-        msg.className = "auth-message";
-        btn.disabled = true;
+    const msg = document.getElementById("loginMsg");
+    msg.textContent = "";
+    msg.className = "msg";
 
-        const payload = {
-          email: document.getElementById("loginEmail").value,
-          password: document.getElementById("loginPassword").value
-        };
+    if (!email || !password) {
+      msg.textContent = "Please enter both email and password.";
+      msg.classList.add("error");
+      return;
+    }
 
-        try {
-          const response = await fetch(API_BASE_URL + "/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-
-          const raw = await response.text();
-          const trimmed = (raw || "").trim();
-
-          // ❌ Agar response OK hi nahi hai -> direct fail
-          if (!response.ok) {
-            msg.textContent = "Login failed: " + (trimmed || "Invalid email or password");
-            msg.className = "auth-message error";
-            localStorage.removeItem("token");
-            btn.disabled = false;
-            return;
-          }
-
-          // ✅ Backend ne token diya to use karo, warna hum khud bana lenge
-          let token = trimmed;
-          if (!token) {
-            token = "sess-" + Date.now();   // frontend generated session id
-          }
-
-          localStorage.setItem("token", token);
-          localStorage.setItem("userEmail", payload.email);
-
-          msg.textContent = "Login successful! Redirecting...";
-          msg.className = "auth-message success";
-
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 800);
-
-        } catch (err) {
-          console.error(err);
-          msg.textContent = "Network error!";
-          msg.className = "auth-message error";
-        } finally {
-          btn.disabled = false;
-        }
+    try {
+      const res = await fetch(API_BASE + "/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
       });
-    });
-  </script>
 
+      if (!res.ok) {
+        const txt = await res.text();
+        msg.textContent = "Login failed: " + txt;
+        msg.classList.add("error");
+        return;
+      }
+
+      const token = await res.text(); // backend sends plain token text
+      localStorage.setItem("token", token);
+      localStorage.setItem("userEmail", email);
+
+      msg.textContent = "Login successful! Redirecting…";
+      msg.classList.add("success");
+
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 600);
+
+    } catch (err) {
+      console.error(err);
+      msg.textContent = "Network error. Please try again.";
+      msg.classList.add("error");
+    }
+  });
+</script>
 </body>
 </html>

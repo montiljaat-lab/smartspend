@@ -1,28 +1,275 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
- <title>SmartSpend — Track Your Spending</title>
+  <meta charset="UTF-8" />
+  <title>SmartSpend — Track Your Spending</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+      --card-bg: rgba(15, 23, 42, 0.95);
+      --card-border: rgba(148, 163, 184, 0.25);
+      --accent: #06b6d4;
+      --accent-soft: rgba(56, 189, 248, 0.25);
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .shell {
+      max-width: 1040px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .brand-card {
+      padding: 32px 30px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.18), transparent 60%),
+        var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .brand-logo {
+      height: 46px;
+      width: auto;
+      filter: drop-shadow(0 0 6px gold);
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 0.14em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+
+    h1 {
+      margin: 18px 0 10px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 480px;
+      line-height: 1.5;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .metric {
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      font-size: 12px;
+    }
+
+    .metric-label {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+    }
+
+    .metric-value {
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .metric-note {
+      margin-top: 2px;
+      color: var(--text-muted);
+    }
+
+    /* RIGHT SIDE CARD */
+    .auth-card {
+      padding: 26px 24px 22px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 22px 60px rgba(15, 23, 42, 0.9);
+    }
+
+    .auth-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .auth-sub {
+      margin: 0 0 18px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .btn-primary, .btn-outline {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      border: none;
+      background: radial-gradient(circle at top left, #22d3ee, #0ea5e9);
+      color: #020617;
+      box-shadow: 0 12px 28px rgba(56, 189, 248, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-outline {
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      background: transparent;
+      color: var(--text-main);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-outline:hover {
+      border-color: #22d3ee;
+    }
+
+    .mini-note {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .brand-card {
+        order: 2;
+      }
+      .auth-card {
+        order: 1;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="hero">
-    <div class="gradient"></div>
-    <div class="container">
-      <h1 class="logo">SmartSpend</h1>
-      <p class="tag">Your cinematic expense companion</p>
-      <div class="actions">
-        <a class="btn" href="/register.html">Create account</a>
-        <a class="btn ghost" href="/login.html">Sign in</a>
-        <a class="btn" href="/expenses.html">Open Expenses</a>
+<div class="shell">
+  <section class="brand-card">
+    <div class="brand-row">
+      <img src="logo.png" alt="SmartSpend logo" class="brand-logo" />
+      <div>
+        <div class="brand-name">SMARTSPEND</div>
+        <div class="logo-sub" style="font-size:11px; text-transform:uppercase; letter-spacing:0.16em; color:#9ca3af;">
+          STAY ON TOP OF EVERY RUPEE.
+        </div>
       </div>
     </div>
-  </div>
-  <script>
-    // small intro animation trigger
-    document.addEventListener('DOMContentLoaded', ()=> document.body.classList.add('loaded'));
-  </script>
+
+    <div class="pill" style="margin-top:10px;">
+      <span class="pill-dot"></span>
+      Track your spending
+    </div>
+
+    <h1>Smart, simple expense tracking for students & professionals.</h1>
+    <p class="subtitle">
+      Record your daily spends, manage budgets, see insights and keep control of where your money goes –
+      all in one clean dashboard.
+    </p>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Designed for</div>
+        <div class="metric-value">BCA / MCA Projects</div>
+        <div class="metric-note">Full-stack Java + HTML + CSS</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Highlights</div>
+        <div class="metric-value">Login • Dashboard • Budget</div>
+        <div class="metric-note">Ready for live demo in college</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Developed by</div>
+        <div class="metric-value">Montil & Team</div>
+        <div class="metric-note">Guided SmartSpend implementation</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="auth-card">
+    <h2 class="auth-title">Welcome to SmartSpend</h2>
+    <p class="auth-sub">Continue to your account or create a new one to start tracking.</p>
+
+    <button class="btn-primary" onclick="window.location.href='login.html'">
+      Sign in to Dashboard →
+    </button>
+
+    <button class="btn-outline" onclick="window.location.href='register.html'">
+      Create a new SmartSpend account
+    </button>
+
+    <p class="mini-note">
+      Your data is stored securely on the backend. You can log in from any device using the same email & password.
+    </p>
+  </section>
+</div>
 </body>
 </html>
